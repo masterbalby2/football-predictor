@@ -3,9 +3,10 @@ import { loadEnv, type Env } from "@soccer/config";
 import { closeDb, migrate } from "@soccer/db";
 import {
   cmdHelp,
+  cmdWelcome,
   cmdToday,
   cmdLeague,
-  cmdFixture,
+  cmdMatch,
   cmdTeam,
   cmdAccuracy,
   cmdSubscribe,
@@ -34,7 +35,11 @@ async function main() {
 
   const bot = new Telegraf(env.TELEGRAM_BOT_TOKEN);
 
-  bot.start(async (ctx) => ctx.reply(await cmdHelp(), { parse_mode: "Markdown" }));
+  bot.start(async (ctx) =>
+    ctx.reply(await cmdWelcome((ctx.from as { first_name?: string })?.first_name), {
+      parse_mode: "Markdown",
+    }),
+  );
   bot.help(async (ctx) => ctx.reply(await cmdHelp(), { parse_mode: "Markdown" }));
 
   bot.command("today", async (ctx) => {
@@ -43,14 +48,14 @@ async function main() {
   });
 
   bot.command("league", async (ctx) => {
-    const arg = ctx.message.text.split(/\s+/)[1] ?? "";
+    const arg = ctx.message.text.split(/\s+/).slice(1).join(" ");
     const text = await cmdLeague(env, arg);
     ctx.reply(text, { parse_mode: "Markdown" });
   });
 
-  bot.command("fixture", async (ctx) => {
-    const arg = ctx.message.text.split(/\s+/)[1] ?? "";
-    const text = await cmdFixture(env, arg);
+  bot.command("match", async (ctx) => {
+    const arg = ctx.message.text.split(/\s+/).slice(1).join(" ");
+    const text = await cmdMatch(env, arg);
     ctx.reply(text, { parse_mode: "Markdown" });
   });
 
@@ -79,7 +84,7 @@ async function main() {
     ctx.reply(text);
   });
 
-  // Daily digest scheduler.
+  // Daily digest scheduler (reads from Postgres directly, batched sends).
   startDigestScheduler(env, {
     sendMessage: (chatId, text) =>
       bot.telegram.sendMessage(chatId, text, { parse_mode: "Markdown" }),

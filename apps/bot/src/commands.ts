@@ -4,6 +4,7 @@ import {
   getFixtures,
   getFixtureById,
   getPredictionsForFixtures,
+  getPredictionForFixture,
   findTeamByName,
   getTeamById,
   getStrengthForTeam,
@@ -14,10 +15,12 @@ import {
   removeSubscriber,
 } from "@soccer/db";
 import type { LeagueCode } from "@soccer/shared-types";
+import { resolveLeagueCode } from "./labels.js";
 import {
   formatHelp,
+  formatWelcome,
   formatFixtureList,
-  formatFixtureDetail,
+  formatMatchBreakdown,
   formatTeam,
   formatAccuracy,
 } from "./format.js";
@@ -40,31 +43,53 @@ export async function cmdHelp(): Promise<string> {
   return formatHelp();
 }
 
+export async function cmdWelcome(name?: string): Promise<string> {
+  return formatWelcome(name);
+}
+
 export async function cmdToday(env: Env): Promise<string> {
   const items = await loadFixturesWithPredictions(env, undefined, 30);
-  // filter to today
+  // Filter to today's fixtures; fall back to the next 10 if none today.
   const todayStr = new Date().toDateString();
   const todays = items.filter((i) => new Date(i.fixture.date).toDateString() === todayStr);
   const list = todays.length > 0 ? todays : items.slice(0, 10);
   return formatFixtureList(list);
 }
 
-export async function cmdLeague(env: Env, code: string): Promise<string> {
-  const upper = code.toUpperCase();
-  if (!["EPL", "LAL", "BUN"].includes(upper)) {
-    return "Unknown league. Use EPL, LAL, or BUN.";
+export async function cmdLeague(env: Env, input: string): Promise<string> {
+  const code = resolveLeagueCode(input);
+  if (!code) {
+    return (
+      "Unknown league. Try one of: `epl`, `laliga`, `bundesliga` " +
+      "(or `EPL`, `LAL`, `BUN`)."
+    );
   }
-  const items = await loadFixturesWithPredictions(env, upper as LeagueCode, 20);
+  const items = await loadFixturesWithPredictions(env, code, 20);
   return formatFixtureList(items);
 }
 
-export async function cmdFixture(env: Env, id: string): Promise<string> {
+/**
+ * /match <team> — find the next upcoming fixture for a team and show the
+ * full prediction breakdown (probabilities + top-3 scorelines + xG).
+ */
+export async function cmdMatch(env: Env, name: string): Promise<string> {
+  if (!name.trim()) {
+    return "Usage: /match `<team name>` — e.g. /match Arsenal";
+  }
   const sql = getDb(env);
-  const fixture = await getFixtureById(sql, id);
-  if (!fixture) return "Fixture not found.";
-  const { getPredictionForFixture } = await import("@soccer/db");
-  const prediction = await getPredictionForFixture(sql, id);
-  return formatFixtureDetail({ fixture, prediction });
+  const team = await findTeamByName(sql, name);
+  if (!team) return `No team matched "${name}".`;
+
+  // Find upcoming fixtures involving this team.
+  const fixtures = await getFixtures(sql, { from: new Date(), limit: 300 });
+  const next = fixtures.find(
+    (f) => f.homeTeamId === team.id || f.awayTeamId === team.id,
+  );
+  if (!next) {
+    return `No upcoming fixture found for *${team.name}*.`;
+  }
+  const prediction = await getPredictionForFixture(sql, next.id);
+  return formatMatchBreakdown({ fixture: next, prediction });
 }
 
 export async function cmdTeam(env: Env, name: string): Promise<string> {

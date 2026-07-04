@@ -76,10 +76,19 @@ Optimization: gradient ascent on weighted log-likelihood with L2 ridge
 
 ## Telegram bot commands
 
-- `/start` — help
-- `/today` — today's fixtures + predictions (all leagues)
-- `/league <EPL|LAL|BUN>` — upcoming for a league
-- `/fixture <id>` — single fixture prediction
-- `/team <name>` — team strengths + form
-- `/accuracy` — model accuracy
-- Daily digest: pushed at a scheduled hour to subscribers (chat ids stored in DB)
+- `/start` — welcome message + point to /help
+- `/today` — today's predictions across all 3 leagues (compact list)
+- `/league epl|laliga|bundesliga` — filter predictions by league
+- `/match <team>` — find upcoming fixture for a team, full breakdown
+  (probabilities + top-3 scorelines + expected goals)
+- `/team <name>` — team strengths + recent form
+- `/accuracy` — recent model accuracy stats
+- `/subscribe` — opt into the daily push digest
+- `/unsubscribe` — opt out
+- `/help` — list commands
+
+Bot reads directly from Postgres (not via the Fastify API) for resilience.
+Daily digest: internal scheduler pushes at `TELEGRAM_DIGEST_HOUR_UTC` to every
+row in `telegram_subscribers`, batched with small delays to respect Telegram's
+bulk-send rate limits. Messages use Telegram Markdown with bolded team names
+and aligned percentages (no emojis).
