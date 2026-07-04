@@ -130,4 +130,13 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: "0005_accuracy_metrics",
+    description: "Add Brier score and log-loss columns to accuracy log",
+    sql: `
+      ALTER TABLE model_accuracy_log
+        ADD COLUMN IF NOT EXISTS brier_score DOUBLE PRECISION DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS log_loss   DOUBLE PRECISION DEFAULT 0;
+    `,
+  },
 ];

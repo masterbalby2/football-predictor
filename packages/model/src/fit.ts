@@ -97,9 +97,24 @@ export function fitModel(
   }
   if (rows.length < options.minMatches) return null;
 
+  // Data-driven initialization: start intercept at log(mean goals) and
+  // homeAdv at log(mean home goals / mean away goals). This speeds up
+  // convergence significantly vs. arbitrary constants.
+  let totalHomeGoals = 0;
+  let totalAwayGoals = 0;
+  let totalWeight = 0;
+  for (const r of rows) {
+    totalHomeGoals += r.w * r.x;
+    totalAwayGoals += r.w * r.y;
+    totalWeight += r.w;
+  }
+  const meanHome = totalHomeGoals / totalWeight;
+  const meanAway = totalAwayGoals / totalWeight;
+  const meanAll = (meanHome + meanAway) / 2;
+
   // Parameters.
-  let intercept = 0.1;
-  let homeAdv = 0.25;
+  let intercept = Math.log(Math.max(meanAll, 0.1));
+  let homeAdv = Math.log(Math.max(meanHome, 0.05)) - Math.log(Math.max(meanAway, 0.05));
   const attack = new Float64Array(nTeams);
   const defense = new Float64Array(nTeams);
 
@@ -115,6 +130,10 @@ export function fitModel(
   let logLik = 0;
 
   for (let iter = 1; iter <= iters; iter++) {
+    // Learning rate decay: linearly decay to 10% of initial by the last iter.
+    const lrDecay = 1 - 0.9 * ((iter - 1) / iters);
+    const lrIter = lr * lrDecay;
+
     let gInt = 0;
     let gAdv = 0;
     const gAtk = new Float64Array(nTeams);
@@ -154,29 +173,29 @@ export function fitModel(
       gDef[i] -= ridge * defense[i];
     }
 
-    // Adam update.
+    // Adam update (with decayed learning rate).
     const t = iter;
     // intercept
     mInt.m = beta1 * mInt.m + (1 - beta1) * gInt;
     mInt.v = beta2 * mInt.v + (1 - beta2) * gInt * gInt;
-    intercept += (lr * (mInt.m / (1 - Math.pow(beta1, t)))) /
+    intercept += (lrIter * (mInt.m / (1 - Math.pow(beta1, t)))) /
       (Math.sqrt(mInt.v / (1 - Math.pow(beta2, t))) + eps);
     // homeAdv
     mAdv.m = beta1 * mAdv.m + (1 - beta1) * gAdv;
     mAdv.v = beta2 * mAdv.v + (1 - beta2) * gAdv * gAdv;
-    homeAdv += (lr * (mAdv.m / (1 - Math.pow(beta1, t)))) /
+    homeAdv += (lrIter * (mAdv.m / (1 - Math.pow(beta1, t)))) /
       (Math.sqrt(mAdv.v / (1 - Math.pow(beta2, t))) + eps);
     // attack / defense
     for (let i = 0; i < nTeams; i++) {
       const aA = aAdam[i];
       aA.m = beta1 * aA.m + (1 - beta1) * gAtk[i];
       aA.v = beta2 * aA.v + (1 - beta2) * gAtk[i] * gAtk[i];
-      attack[i] += (lr * (aA.m / (1 - Math.pow(beta1, t)))) /
+      attack[i] += (lrIter * (aA.m / (1 - Math.pow(beta1, t)))) /
         (Math.sqrt(aA.v / (1 - Math.pow(beta2, t))) + eps);
       const dA = dAdam[i];
       dA.m = beta1 * dA.m + (1 - beta1) * gDef[i];
       dA.v = beta2 * dA.v + (1 - beta2) * gDef[i] * gDef[i];
-      defense[i] += (lr * (dA.m / (1 - Math.pow(beta1, t)))) /
+      defense[i] += (lrIter * (dA.m / (1 - Math.pow(beta1, t)))) /
         (Math.sqrt(dA.v / (1 - Math.pow(beta2, t))) + eps);
     }
 

@@ -54,9 +54,9 @@ export interface PredictionResult {
 }
 
 export const DEFAULT_FIT_OPTIONS: FitOptions = {
-  halfLifeDays: 540,
-  ridgeLambda: 0.002,
-  delta: 0.011,
+  halfLifeDays: 365,
+  ridgeLambda: 0,
+  delta: 0.15,
   maxGoals: 10,
   minMatches: 20,
   iterations: 4000,

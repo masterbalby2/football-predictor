@@ -39,9 +39,9 @@ const EnvSchema = z.object({
     .string()
     .default("https://api.football-data.org/v4"),
 
-  DC_DELTA: num(0.011),
-  DC_HALF_LIFE_DAYS: num(540),
-  DC_RIDGE_LAMBDA: num(0.002),
+  DC_DELTA: num(0.15),
+  DC_HALF_LIFE_DAYS: num(365),
+  DC_RIDGE_LAMBDA: num(0),
   DC_MAX_GOALS: num(10),
   DC_MIN_MATCHES: num(20),
   MODEL_VERSION: z.string().default("DC-1"),

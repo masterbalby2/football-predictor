@@ -158,29 +158,39 @@ export function generateSeedData(now: Date = new Date()): SeedData {
       teams.push({ id: tid(t.name), leagueCode, name: t.name, shortName: t.short });
     }
 
-    // Generate two half-seasons of round-robin-ish results (~14 matchdays).
-    // Each matchday pairs teams; we run 14 rounds.
+    // Generate a full round-robin schedule using the circle method, then
+    // run it twice (home/away reversed on the second pass) for a double
+    // round-robin — mirroring real league structure.
     const n = leagueTeams.length;
-    const rounds = 16;
-    // Start ~240 days ago, matches every ~3.5 days.
-    const startOffsetDays = 240;
-    for (let round = 0; round < rounds; round++) {
-      // simple rotate pairing
-      const pairings: [number, number][] = [];
-      const used = new Set<number>();
-      for (let i = 0; i < n; i++) {
-        if (used.has(i)) continue;
-        for (let j = i + 1; j < n; j++) {
-          if (used.has(j)) continue;
-          // alternate home/away by round parity for variety
-          const home = round % 2 === 0 ? i : j;
-          const away = round % 2 === 0 ? j : i;
-          pairings.push([home, away]);
-          used.add(i);
-          used.add(j);
-          break;
+    const singleRound = n - 1; // rounds needed for one RR pass
+    const rounds = singleRound * 2; // double round-robin
+    // Start ~260 days ago, matches every ~3.5 days.
+    const startOffsetDays = 260;
+
+    // Circle-method rotation: fix team 0, rotate the rest.
+    // Returns pairings for a single round.
+    function circlePairings(round: number): [number, number][] {
+      const order = Array.from({ length: n }, (_, i) => i);
+      // Rotate: fix index 0, shift the rest left by `round` positions.
+      const fixed = order[0];
+      const rest = order.slice(1);
+      const rotated = [fixed, ...rest.slice(round % (n - 1)), ...rest.slice(0, round % (n - 1))];
+      const pairs: [number, number][] = [];
+      for (let i = 0; i < n / 2; i++) {
+        const a = rotated[i];
+        const b = rotated[n - 1 - i];
+        // On the second half (reverse fixtures), swap home/away.
+        if (round >= singleRound) {
+          pairs.push([b, a]);
+        } else {
+          pairs.push([a, b]);
         }
       }
+      return pairs;
+    }
+
+    for (let round = 0; round < rounds; round++) {
+      const pairings = circlePairings(round);
       const dayOffset = startOffsetDays - round * 4;
       const matchDate = new Date(now.getTime() - dayOffset * 86400_000);
       let slot = 0;
@@ -213,58 +223,45 @@ export function generateSeedData(now: Date = new Date()): SeedData {
       }
     }
 
-    // Upcoming fixtures: next 10 days, one matchday per league.
+    // Upcoming fixtures: next 10 days, two matchdays using the next
+    // round-robin rounds (continuing from where the finished matches left off).
     const upcomingDay = 3;
     const baseDate = new Date(now.getTime() + upcomingDay * 86400_000);
-    const used = new Set<number>();
+    const upRound1 = rounds; // next round after finished matches
+    const upRound2 = rounds + 1;
     let slot = 0;
-    for (let i = 0; i < n; i++) {
-      if (used.has(i)) continue;
-      for (let j = i + 1; j < n; j++) {
-        if (used.has(j)) continue;
-        const home = leagueTeams[i];
-        const away = leagueTeams[j];
-        const id = `${leagueCode}:${season}:UP:${slug(home.name)}-${slug(away.name)}`;
-        const date = new Date(baseDate.getTime() + slot * 6 * 3600_000);
-        fixtures.push({
-          id,
-          leagueCode,
-          season,
-          date,
-          homeTeamId: tid(home.name),
-          awayTeamId: tid(away.name),
-        });
-        used.add(i);
-        used.add(j);
-        slot++;
-        break;
-      }
+    for (const [hi, ai] of circlePairings(upRound1)) {
+      const home = leagueTeams[hi];
+      const away = leagueTeams[ai];
+      const id = `${leagueCode}:${season}:UP:${slug(home.name)}-${slug(away.name)}`;
+      const date = new Date(baseDate.getTime() + slot * 6 * 3600_000);
+      fixtures.push({
+        id,
+        leagueCode,
+        season,
+        date,
+        homeTeamId: tid(home.name),
+        awayTeamId: tid(away.name),
+      });
+      slot++;
     }
     // a second matchday a few days later for a fuller dashboard
     const baseDate2 = new Date(now.getTime() + 8 * 86400_000);
-    const used2 = new Set<number>();
     let slot2 = 0;
-    for (let i = n - 1; i > 0; i--) {
-      if (used2.has(i)) continue;
-      for (let j = i - 1; j >= 0; j--) {
-        if (used2.has(j)) continue;
-        const home = leagueTeams[j];
-        const away = leagueTeams[i];
-        const id = `${leagueCode}:${season}:UP2:${slug(home.name)}-${slug(away.name)}`;
-        const date = new Date(baseDate2.getTime() + slot2 * 6 * 3600_000);
-        fixtures.push({
-          id,
-          leagueCode,
-          season,
-          date,
-          homeTeamId: tid(home.name),
-          awayTeamId: tid(away.name),
-        });
-        used2.add(i);
-        used2.add(j);
-        slot2++;
-        break;
-      }
+    for (const [hi, ai] of circlePairings(upRound2)) {
+      const home = leagueTeams[hi];
+      const away = leagueTeams[ai];
+      const id = `${leagueCode}:${season}:UP2:${slug(home.name)}-${slug(away.name)}`;
+      const date = new Date(baseDate2.getTime() + slot2 * 6 * 3600_000);
+      fixtures.push({
+        id,
+        leagueCode,
+        season,
+        date,
+        homeTeamId: tid(home.name),
+        awayTeamId: tid(away.name),
+      });
+      slot2++;
     }
   }
 

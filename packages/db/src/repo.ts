@@ -434,10 +434,11 @@ export async function upsertAccuracy(
   point: AccuracyPoint,
 ): Promise<void> {
   await sql`
-    INSERT INTO model_accuracy_log (date, league_code, total, correct, accuracy)
-    VALUES (${point.date}, ${point.leagueCode}, ${point.total}, ${point.correct}, ${point.accuracy})
+    INSERT INTO model_accuracy_log (date, league_code, total, correct, accuracy, brier_score, log_loss)
+    VALUES (${point.date}, ${point.leagueCode}, ${point.total}, ${point.correct}, ${point.accuracy}, ${point.brierScore}, ${point.logLoss})
     ON CONFLICT (date, league_code) DO UPDATE SET
-      total = EXCLUDED.total, correct = EXCLUDED.correct, accuracy = EXCLUDED.accuracy`;
+      total = EXCLUDED.total, correct = EXCLUDED.correct, accuracy = EXCLUDED.accuracy,
+      brier_score = EXCLUDED.brier_score, log_loss = EXCLUDED.log_loss`;
 }
 
 export async function getAccuracyHistory(
@@ -445,7 +446,7 @@ export async function getAccuracyHistory(
   limit = 30,
 ): Promise<AccuracyPoint[]> {
   const rows = await sql`
-    SELECT date::text AS date, league_code, total, correct, accuracy
+    SELECT date::text AS date, league_code, total, correct, accuracy, brier_score, log_loss
     FROM model_accuracy_log
     ORDER BY date DESC, league_code ASC LIMIT ${limit}`;
   return rows.map((r) => ({
@@ -454,6 +455,8 @@ export async function getAccuracyHistory(
     total: r.total,
     correct: r.correct,
     accuracy: r.accuracy,
+    brierScore: r.brier_score ?? 0,
+    logLoss: r.log_loss ?? 0,
   })) as AccuracyPoint[];
 }
 

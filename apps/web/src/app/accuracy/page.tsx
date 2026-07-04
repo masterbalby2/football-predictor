@@ -50,10 +50,17 @@ export default async function AccuracyPage() {
   });
 
   const overall = history.reduce(
-    (acc, h) => ({ correct: acc.correct + h.correct, total: acc.total + h.total }),
-    { correct: 0, total: 0 },
+    (acc, h) => ({
+      correct: acc.correct + h.correct,
+      total: acc.total + h.total,
+      brierSum: acc.brierSum + (h.brierScore ?? 0) * h.total,
+      logLossSum: acc.logLossSum + (h.logLoss ?? 0) * h.total,
+    }),
+    { correct: 0, total: 0, brierSum: 0, logLossSum: 0 },
   );
   const overallPct = overall.total > 0 ? (overall.correct / overall.total) * 100 : 0;
+  const overallBrier = overall.total > 0 ? overall.brierSum / overall.total : 0;
+  const overallLogLoss = overall.total > 0 ? overall.logLossSum / overall.total : 0;
 
   return (
     <div className="space-y-8">
@@ -105,13 +112,13 @@ export default async function AccuracyPage() {
             <Card>
               <CardContent className="p-5">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Model Version
+                  Brier Score
                 </div>
                 <div className="mt-2 font-mono text-3xl tabular-nums">
-                  DC-1
+                  {overallBrier.toFixed(4)}
                 </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Dixon-Coles Poisson
+                <div className="mt-1 text-xs text-muted-foreground font-mono tabular-nums">
+                  lower is better (0.222 = random)
                 </div>
               </CardContent>
             </Card>
@@ -149,17 +156,19 @@ export default async function AccuracyPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                <div className="grid grid-cols-4 gap-4 pb-2 text-xs uppercase tracking-wide text-muted-foreground">
+                <div className="grid grid-cols-6 gap-4 pb-2 text-xs uppercase tracking-wide text-muted-foreground">
                   <span>League</span>
                   <span className="text-right">Correct</span>
                   <span className="text-right">Total</span>
                   <span className="text-right">Accuracy</span>
+                  <span className="text-right">Brier</span>
+                  <span className="text-right">Log-Loss</span>
                 </div>
                 <Separator />
                 {leagues.map(([code, h]) => (
                   <div
                     key={code}
-                    className="grid grid-cols-4 gap-4 py-2.5 items-center"
+                    className="grid grid-cols-6 gap-4 py-2.5 items-center"
                   >
                     <span className="text-sm">{leagueLabel(code)}</span>
                     <span className="text-right font-mono text-sm tabular-nums">
@@ -178,6 +187,12 @@ export default async function AccuracyPage() {
                         <X className="h-4 w-4" />
                       )}
                     </span>
+                    <span className="text-right font-mono text-sm tabular-nums text-muted-foreground">
+                      {(h.brierScore ?? 0).toFixed(4)}
+                    </span>
+                    <span className="text-right font-mono text-sm tabular-nums text-muted-foreground">
+                      {(h.logLoss ?? 0).toFixed(4)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -193,10 +208,18 @@ export default async function AccuracyPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>
-                Accuracy is measured out-of-sample: the model is fit on past
-                matches, then each fixture is predicted before it occurs. The
-                pick (Home/Draw/Away) is the outcome with the highest
-                probability.
+                Accuracy is measured out-of-sample using walk-forward
+                (rolling-origin) validation: the model is repeatedly fit on
+                past matches, then the next batch of fixtures is predicted
+                before they occur. The pick (Home/Draw/Away) is the outcome
+                with the highest probability.
+              </p>
+              <p>
+                Brier score and log-loss complement raw accuracy by measuring
+                probability calibration. Brier score is the mean squared error
+                of predicted probabilities (0 = perfect, 0.222 = random
+                guessing on 3-way). Log-loss heavily penalises confident wrong
+                predictions (lower is better).
               </p>
               <p>
                 The Dixon-Coles model estimates team attack and defense

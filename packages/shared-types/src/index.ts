@@ -111,6 +111,8 @@ export const AccuracyPointSchema = z.object({
   total: z.number().int(),
   correct: z.number().int(),
   accuracy: z.number(),
+  brierScore: z.number().default(0),
+  logLoss: z.number().default(0),
 });
 export type AccuracyPoint = z.infer<typeof AccuracyPointSchema>;
 

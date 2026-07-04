@@ -17,8 +17,7 @@ import {
 import {
   fitModel,
   predict,
-  evaluateOnMatches,
-  splitTrainTest,
+  walkForwardEval,
   DEFAULT_FIT_OPTIONS,
   type MatchInput,
 } from "@soccer/model";
@@ -107,15 +106,16 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
       });
     }
 
-    // Out-of-sample accuracy: fit on train split, evaluate on held-out test.
-    const { train, test } = splitTrainTest(matchInputs, 0.2);
-    if (train.length >= fitOpts.minMatches && test.length > 0) {
-      const trainFit = fitModel(leagueCode, train, fitOpts);
-      if (trainFit) {
-        const acc = evaluateOnMatches(trainFit, test, {
-          delta: fitOpts.delta,
-          maxGoals: fitOpts.maxGoals,
-        });
+    // Out-of-sample accuracy via walk-forward (rolling-origin) validation:
+    // repeatedly fit on the first k matches, evaluate on the next batch.
+    // This is more robust than a single train/test split.
+    if (matchInputs.length >= fitOpts.minMatches + 20) {
+      const acc = walkForwardEval(leagueCode, matchInputs, fitOpts, {
+        testSize: 20,
+        minTrain: Math.max(fitOpts.minMatches, 40),
+        step: 20,
+      });
+      if (acc.total > 0) {
         accuracyRows.push({
           leagueCode,
           total: acc.total,
@@ -128,6 +128,8 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
           total: acc.total,
           correct: acc.correct,
           accuracy: acc.accuracy,
+          brierScore: acc.brierScore,
+          logLoss: acc.logLoss,
         });
       }
     }
