@@ -1,7 +1,8 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import { timingSafeEqual } from "node:crypto";
 import { loadEnv, type Env } from "@soccer/config";
 import {
   getDb,
@@ -29,6 +30,45 @@ import {
 
 const CACHE_TTL = 60; // seconds — short, since cron refreshes daily
 
+/**
+ * Bearer token auth hook. If API_AUTH_TOKEN is set, all requests
+ * (except /health and /docs) must include `Authorization: Bearer <token>`.
+ * If API_AUTH_TOKEN is empty, auth is disabled (dev mode).
+ */
+function authHook(env: Env) {
+  return async (req: FastifyRequest, reply: FastifyReply) => {
+    // Always allow health checks and docs
+    if (req.url.startsWith("/health") || req.url.startsWith("/docs")) {
+      return;
+    }
+
+    // If no token configured, auth is disabled
+    if (!env.API_AUTH_TOKEN) return;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return reply.code(401).send({
+        error: "unauthorized",
+        message: "Missing or invalid Authorization header. Use: Bearer <token>",
+      });
+    }
+
+    const token = authHeader.slice(7);
+    const tokenBuf = Buffer.from(token);
+    const expectedBuf = Buffer.from(env.API_AUTH_TOKEN);
+
+    if (
+      tokenBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(tokenBuf, expectedBuf)
+    ) {
+      return reply.code(401).send({
+        error: "unauthorized",
+        message: "Invalid API token",
+      });
+    }
+  };
+}
+
 export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance> {
   const app = Fastify({ logger: { level: "info" } });
 
@@ -43,12 +83,30 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     openapi: {
       info: {
         title: "Soccer Match Predictor API",
-        description: "Dixon-Coles match predictions for EPL, La Liga, and Bundesliga.",
+        description:
+          "Dixon-Coles match predictions for EPL, La Liga, and Bundesliga.\n\n" +
+          "## Authentication\n" +
+          "If `API_AUTH_TOKEN` is set on the server, all endpoints (except `/health` and `/docs`) " +
+          "require a Bearer token in the `Authorization` header:\n\n" +
+          "```\nAuthorization: Bearer <your-token>\n```",
         version: "1.0.0",
       },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            description: "Set API_AUTH_TOKEN on the server. If empty, auth is disabled.",
+          },
+        },
+      },
+      security: [{ bearerAuth: [] }],
     },
   });
   await app.register(swaggerUi, { routePrefix: "/docs" });
+
+  // Register auth hook (runs before route handlers)
+  app.addHook("onRequest", authHook(env));
 
   if (env.DB_RUN_MIGRATIONS) {
     const sql = getDb(env);

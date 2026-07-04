@@ -23,6 +23,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/logout-button";
 
 const links = [
   { href: "/", label: "Today", icon: SoccerBall, short: "Today" },
@@ -87,6 +88,11 @@ export function Nav() {
           ))}
         </nav>
 
+        {/* Right side: logout (desktop) */}
+        <div className="hidden md:block">
+          <LogoutButton />
+        </div>
+
         {/* Mobile nav trigger */}
         <div className="md:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -116,6 +122,13 @@ export function Nav() {
                   </SheetClose>
                 ))}
               </nav>
+              <div className="px-4 mt-6 border-t border-border pt-4">
+                <SheetClose asChild>
+                  <div>
+                    <LogoutButton />
+                  </div>
+                </SheetClose>
+              </div>
             </SheetContent>
           </Sheet>
         </div>

@@ -13,9 +13,17 @@ import {
 const BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+// Server-side only: API bearer token. Not exposed to the browser.
+// When set, all API requests include `Authorization: Bearer <token>`.
+const API_TOKEN = process.env.API_AUTH_TOKEN ?? "";
+
 async function fetchApi<T>(path: string, revalidate = 60): Promise<T> {
   const url = `${BASE}${path}`;
-  const res = await fetch(url, { next: { revalidate } });
+  const headers: Record<string, string> = {};
+  if (API_TOKEN) {
+    headers["Authorization"] = `Bearer ${API_TOKEN}`;
+  }
+  const res = await fetch(url, { next: { revalidate }, headers });
   if (!res.ok) {
     throw new Error(`API ${res.status} for ${path}`);
   }

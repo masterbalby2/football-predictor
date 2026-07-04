@@ -50,9 +50,15 @@ const EnvSchema = z.object({
   API_PORT: num(4000),
   API_BASE_URL: z.string().default("http://localhost:4000"),
   API_CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  API_AUTH_TOKEN: z.string().optional().default(""),
 
   WEB_PORT: num(3000),
   NEXT_PUBLIC_API_URL: z.string().default("http://localhost:4000"),
+
+  // Auth credentials for the web frontend.
+  AUTH_USERNAME: z.string().default("admin"),
+  AUTH_PASSWORD: z.string().default("predictor123"),
+  AUTH_SECRET: z.string().default("dev-secret-change-in-production"),
 
   TELEGRAM_BOT_TOKEN: z.string().optional().default(""),
   TELEGRAM_BOT_OWNER_CHAT_ID: z.string().optional().default(""),
