@@ -1,5 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import { loadEnv, type Env } from "@soccer/config";
 import {
   getDb,
@@ -36,16 +38,32 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     methods: ["GET"],
   });
 
+  // Swagger / OpenAPI docs at /docs
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: "Soccer Match Predictor API",
+        description: "Dixon-Coles match predictions for EPL, La Liga, and Bundesliga.",
+        version: "1.0.0",
+      },
+    },
+  });
+  await app.register(swaggerUi, { routePrefix: "/docs" });
+
   if (env.DB_RUN_MIGRATIONS) {
     const sql = getDb(env);
     await migrate(sql);
   }
 
   /* ---- health ---- */
-  app.get("/health", async () => ({ status: "ok", time: new Date().toISOString() }));
+  app.get("/health", {
+    schema: { tags: ["system"], summary: "Health check" },
+  }, async () => ({ status: "ok", time: new Date().toISOString() }));
 
   /* ---- leagues ---- */
-  app.get("/leagues", async (_req, reply) => {
+  app.get("/leagues", {
+    schema: { tags: ["leagues"], summary: "List all leagues" },
+  }, async (_req, reply) => {
     const cacheKey = "leagues";
     const cached = await cacheGet(env, cacheKey);
     if (cached) return cached;
@@ -56,7 +74,19 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
   });
 
   /* ---- fixtures ---- */
-  app.get("/fixtures", async (req) => {
+  app.get("/fixtures", {
+    schema: {
+      tags: ["fixtures"],
+      summary: "List upcoming fixtures with predictions",
+      querystring: {
+        type: "object",
+        properties: {
+          league: { type: "string", enum: ["EPL", "LAL", "BUN"] },
+          limit: { type: "integer", minimum: 1, maximum: 300 },
+        },
+      },
+    },
+  }, async (req) => {
     const q = (req.query as { league?: string; limit?: string });
     const leagueCode = q.league ? LeagueCodeSchema.parse(q.league) : undefined;
     const limit = q.limit ? Math.min(300, Number(q.limit)) : 100;
@@ -81,7 +111,9 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     return result;
   });
 
-  app.get("/leagues/:code/fixtures", async (req, reply) => {
+  app.get("/leagues/:code/fixtures", {
+    schema: { tags: ["fixtures"], summary: "List fixtures for a specific league" },
+  }, async (req, reply) => {
     const { code } = req.params as { code: string };
     const parsed = LeagueCodeSchema.safeParse(code);
     if (!parsed.success) return reply.code(400).send({ error: "invalid_league", message: "Unknown league code" });
@@ -91,7 +123,9 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     return fixtures.map((f) => ({ fixture: f, prediction: predMap.get(f.id) ?? null }));
   });
 
-  app.get("/fixtures/:id", async (req, reply) => {
+  app.get("/fixtures/:id", {
+    schema: { tags: ["fixtures"], summary: "Get a single fixture with prediction" },
+  }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const cacheKey = `fixture:${id}`;
     const cached = await cacheGet<FixtureWithPrediction>(env, cacheKey);
@@ -105,7 +139,9 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     return result;
   });
 
-  app.get("/fixtures/:id/prediction", async (req, reply) => {
+  app.get("/fixtures/:id/prediction", {
+    schema: { tags: ["fixtures"], summary: "Get prediction for a fixture" },
+  }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const sql = getDb(env);
     const prediction = await getPredictionForFixture(sql, id);
@@ -114,7 +150,16 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
   });
 
   /* ---- teams ---- */
-  app.get("/teams", async (req) => {
+  app.get("/teams", {
+    schema: {
+      tags: ["teams"],
+      summary: "List teams (optionally filtered by league)",
+      querystring: {
+        type: "object",
+        properties: { league: { type: "string", enum: ["EPL", "LAL", "BUN"] } },
+      },
+    },
+  }, async (req) => {
     const q = (req.query as { league?: string });
     const leagueCode = q.league ? LeagueCodeSchema.parse(q.league) : undefined;
     const cacheKey = `teams:${leagueCode ?? "all"}`;
@@ -126,7 +171,9 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     return teams;
   });
 
-  app.get("/teams/search", async (req, reply) => {
+  app.get("/teams/search", {
+    schema: { tags: ["teams"], summary: "Search teams by name" },
+  }, async (req, reply) => {
     const q = (req.query as { q?: string });
     if (!q.q) return reply.code(400).send({ error: "missing_query", message: "q is required" });
     const sql = getDb(env);
@@ -134,7 +181,9 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     return team ?? reply.code(404).send({ error: "not_found", message: "No team matched" });
   });
 
-  app.get("/teams/:id", async (req, reply) => {
+  app.get("/teams/:id", {
+    schema: { tags: ["teams"], summary: "Get team detail with strength and recent form" },
+  }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const cacheKey = `team:${id}`;
     const cached = await cacheGet<TeamDetail>(env, cacheKey);
@@ -172,7 +221,9 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
   });
 
   /* ---- accuracy ---- */
-  app.get("/accuracy", async () => {
+  app.get("/accuracy", {
+    schema: { tags: ["accuracy"], summary: "Model accuracy stats and history" },
+  }, async () => {
     const cacheKey = "accuracy";
     const cached = await cacheGet(env, cacheKey);
     if (cached) return cached;
