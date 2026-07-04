@@ -1,0 +1,30 @@
+# Ignore everything except what each Dockerfile needs at build time.
+# Docker build context is the repo root (so monorepo workspaces resolve).
+
+# Build artifacts
+**/dist
+**/.next
+**/build
+**/*.tsbuildinfo
+
+# Deps (installed inside the image)
+**/node_modules
+
+# Env / local
+.env
+.env.*
+!.env.example
+
+# Git / editor / os
+.git
+.gitignore
+.idea
+.vscode
+.DS_Store
+
+# Docs
+DEPLOY.md
+PROJECT_SPEC.md
+README.md
+
+# Keep source + manifests (everything else) — Dockerfile copies explicitly.

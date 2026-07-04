@@ -1,0 +1,7 @@
+[deploy]
+# Build from the repo root so workspace deps resolve.
+# Each Railway service sets its own Dockerfile path via the dashboard
+# (or `railway up --dockerfile <path>`). The defaults below cover that.
+
+[variables]
+NODE_ENV = "production"

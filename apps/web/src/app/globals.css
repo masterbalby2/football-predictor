@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark "sportsbook / terminal" theme by default */
+    --background: 222 22% 7%;
+    --foreground: 210 20% 92%;
+
+    --card: 222 20% 10%;
+    --card-foreground: 210 20% 92%;
+
+    --primary: 142 60% 45%;
+    --primary-foreground: 222 30% 8%;
+
+    --secondary: 222 18% 16%;
+    --secondary-foreground: 210 20% 92%;
+
+    --muted: 222 16% 18%;
+    --muted-foreground: 215 14% 60%;
+
+    --accent: 38 90% 50%;
+    --accent-foreground: 222 30% 8%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 210 20% 98%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 222 30% 8%;
+
+    --warning: 38 90% 50%;
+    --warning-foreground: 222 30% 8%;
+
+    --border: 222 16% 20%;
+    --input: 222 16% 20%;
+    --ring: 142 60% 45%;
+
+    --radius: 0.6rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Numeric / mono data gets the terminal feel via .font-mono utility. */
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+}
