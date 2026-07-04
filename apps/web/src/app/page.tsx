@@ -1,100 +1,87 @@
-import { getFixtures, getAccuracy, getLeagues, type FixtureWithPrediction } from "@/lib/api";
-import { FixturesTabs } from "@/components/fixtures-tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BarChart3, CalendarDays, TrendingUp } from "lucide-react";
+import { Suspense } from "react";
+import { SoccerBall } from "@phosphor-icons/react/ssr";
+import { getFixtures } from "@/lib/api";
+import { FixtureCard } from "@/components/fixture-card";
+import { FixtureGridSkeleton } from "@/components/fixture-card-skeleton";
+import { LeagueFilter } from "@/components/league-filter";
+import { leagueLabel } from "@/lib/utils";
+import type { FixtureWithPrediction } from "@/lib/api";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+
+function groupByLeague(items: FixtureWithPrediction[]) {
+  const groups = new Map<string, FixtureWithPrediction[]>();
+  for (const item of items) {
+    const code = item.fixture.leagueCode;
+    if (!groups.has(code)) groups.set(code, []);
+    groups.get(code)!.push(item);
+  }
+  return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+}
 
 export default async function HomePage() {
-  let fixtures: FixtureWithPrediction[] = [];
-  let accuracy = { latestRun: null as null | { createdAt: string; matchCount: number }, history: [] as { leagueCode: string; accuracy: number; total: number; correct: number; date: string }[] };
-  let leagues: { code: string; name: string }[] = [];
+  let items: FixtureWithPrediction[] = [];
+  let error: string | null = null;
   try {
-    [fixtures, accuracy, leagues] = await Promise.all([
-      getFixtures(undefined, 60),
-      getAccuracy(),
-      getLeagues(),
-    ]);
+    items = await getFixtures(undefined, 60);
   } catch {
-    // API not reachable — render empty state.
+    error = "Unable to load predictions right now. Please try again shortly.";
   }
 
-  const withPred = fixtures.filter((f) => f.prediction);
-  const recentAcc = accuracy.history.slice(0, 6);
+  // Filter to today's fixtures; fall back to upcoming if none today.
+  const todayStr = new Date().toDateString();
+  const todays = items.filter(
+    (i) => new Date(i.fixture.date).toDateString() === todayStr,
+  );
+  const display = todays.length > 0 ? todays : items.slice(0, 12);
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Dixon-Coles predictions across {leagues.length || 3} leagues. Data
-          refreshed once daily.
-        </p>
+      {/* Page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <SoccerBall className="h-6 w-6" weight="fill" />
+            Today&apos;s Predictions
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Dixon-Coles model · EPL · La Liga · Bundesliga
+          </p>
+        </div>
+        <LeagueFilter />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarDays className="h-4 w-4" /> Upcoming fixtures
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-mono text-2xl tabular-nums">{fixtures.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendingUp className="h-4 w-4" /> With predictions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-mono text-2xl tabular-nums">{withPred.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <BarChart3 className="h-4 w-4" /> Model accuracy
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-mono text-2xl tabular-nums">
-              {recentAcc[0] ? `${(recentAcc[0].accuracy * 100).toFixed(1)}%` : "—"}
-            </div>
-            {recentAcc[0] && (
-              <div className="text-xs text-muted-foreground">
-                {recentAcc[0].leagueCode} · {recentAcc[0].correct}/{recentAcc[0].total}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {recentAcc.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Recent accuracy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {recentAcc.map((a) => (
-                <Badge key={`${a.date}-${a.leagueCode}`} variant="outline" className="font-mono">
-                  {a.leagueCode} {(a.accuracy * 100).toFixed(1)}%
-                  <span className="ml-1 text-muted-foreground">({a.correct}/{a.total})</span>
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {error ? (
+        <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
+          {error}
+        </div>
+      ) : display.length === 0 ? (
+        <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
+          No upcoming fixtures. Check back later.
+        </div>
+      ) : (
+        <Suspense fallback={<FixtureGridSkeleton count={6} />}>
+          <div className="space-y-8">
+            {groupByLeague(display).map(([code, leagueItems]) => (
+              <section key={code} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                    {leagueLabel(code)}
+                  </h2>
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                    {leagueItems.length} match{leagueItems.length !== 1 ? "es" : ""}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {leagueItems.map((item) => (
+                    <FixtureCard key={item.fixture.id} item={item} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </Suspense>
       )}
-
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">Upcoming fixtures</h2>
-        <FixturesTabs fixtures={fixtures} />
-      </div>
     </div>
   );
 }

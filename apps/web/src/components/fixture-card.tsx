@@ -1,57 +1,67 @@
 import Link from "next/link";
+import { CalendarBlank, ArrowRight } from "@phosphor-icons/react/ssr";
 import type { FixtureWithPrediction } from "@soccer/shared-types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PredictionBar } from "@/components/prediction-bar";
 import { ScorelineList } from "@/components/scoreline-list";
 import { formatKickoff, leagueLabel } from "@/lib/utils";
-import { CalendarClock, Goal } from "lucide-react";
 
+/**
+ * Compact fixture card: teams, kickoff, W/D/L probability bars,
+ * top scoreline, and a "view details" link to /match/[id].
+ */
 export function FixtureCard({ item }: { item: FixtureWithPrediction }) {
   const { fixture, prediction } = item;
+  const matchId = encodeURIComponent(fixture.id);
   return (
-    <Link href={`/fixtures/${fixture.id}`} className="block">
-      <Card className="transition-colors hover:border-primary/40">
-        <CardContent className="p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <Badge variant="outline" className="font-mono">
-              {leagueLabel(fixture.leagueCode)}
-            </Badge>
-            <span className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-              <CalendarClock className="h-3.5 w-3.5" />
+    <Link href={`/match/${matchId}`} className="block group">
+      <Card className="transition-colors hover:bg-secondary/30 h-full">
+        <CardContent className="p-4 space-y-3">
+          {/* Header: league + kickoff */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{leagueLabel(fixture.leagueCode)}</span>
+            <span className="flex items-center gap-1 font-mono tabular-nums">
+              <CalendarBlank className="h-3 w-3" />
               {formatKickoff(fixture.date)}
             </span>
           </div>
 
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex-1 text-sm font-medium">
+          {/* Teams */}
+          <div className="flex items-center justify-between">
+            <span className="font-medium truncate pr-2">
               {fixture.homeTeam.name}
-              <span className="ml-1 text-xs text-muted-foreground">(H)</span>
-            </div>
-            <div className="px-2 font-mono text-xs text-muted-foreground">vs</div>
-            <div className="flex-1 text-right text-sm font-medium">
+            </span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">
+              vs
+            </span>
+            <span className="font-medium truncate pl-2 text-right">
               {fixture.awayTeam.name}
-              <span className="mr-1 text-xs text-muted-foreground">(A)</span>
-            </div>
+            </span>
           </div>
 
+          {/* Probabilities */}
           {prediction ? (
-            <div className="space-y-3">
+            <>
               <PredictionBar prediction={prediction} />
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Goal className="h-3.5 w-3.5" />
-                  <span className="font-mono">
-                    xG {prediction.expectedHomeGoals.toFixed(2)} -{" "}
-                    {prediction.expectedAwayGoals.toFixed(2)}
-                  </span>
-                </div>
-                <ScorelineList scorelines={prediction.topScorelines} />
+              <div className="flex items-center justify-between pt-1">
+                <ScorelineList
+                  scorelines={prediction.topScorelines}
+                  limit={1}
+                />
+                <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                  Details
+                  <ArrowRight className="h-3 w-3" />
+                </span>
               </div>
-            </div>
+            </>
           ) : (
-            <div className="rounded-md border border-dashed py-4 text-center text-xs text-muted-foreground">
-              No prediction yet
+            <div className="flex items-center justify-between pt-1">
+              <Badge variant="outline">No prediction</Badge>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                Details
+                <ArrowRight className="h-3 w-3" />
+              </span>
             </div>
           )}
         </CardContent>

@@ -4,39 +4,39 @@
 
 @layer base {
   :root {
-    /* Dark "sportsbook / terminal" theme by default */
-    --background: 222 22% 7%;
-    --foreground: 210 20% 92%;
+    /* True monochrome: pure black background, pure white text, grays only */
+    --background: 0 0% 0%;        /* #000000 */
+    --foreground: 0 0% 100%;      /* #ffffff */
 
-    --card: 222 20% 10%;
-    --card-foreground: 210 20% 92%;
+    --card: 0 0% 4%;              /* near-black cards */
+    --card-foreground: 0 0% 100%;
 
-    --primary: 142 60% 45%;
-    --primary-foreground: 222 30% 8%;
+    --primary: 0 0% 100%;         /* white as primary */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 222 18% 16%;
-    --secondary-foreground: 210 20% 92%;
+    --secondary: 0 0% 12%;        /* gray panels */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 222 16% 18%;
-    --muted-foreground: 215 14% 60%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 45%;  /* gray text */
 
-    --accent: 38 90% 50%;
-    --accent-foreground: 222 30% 8%;
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 0% 100%;     /* no red — just white/inverted */
+    --destructive-foreground: 0 0% 0%;
 
-    --success: 142 60% 45%;
-    --success-foreground: 222 30% 8%;
+    --success: 0 0% 100%;
+    --success-foreground: 0 0% 0%;
 
-    --warning: 38 90% 50%;
-    --warning-foreground: 222 30% 8%;
+    --warning: 0 0% 100%;
+    --warning-foreground: 0 0% 0%;
 
-    --border: 222 16% 20%;
-    --input: 222 16% 20%;
-    --ring: 142 60% 45%;
+    --border: 0 0% 20%;           /* thin gray borders */
+    --input: 0 0% 20%;
+    --ring: 0 0% 80%;
 
-    --radius: 0.6rem;
+    --radius: 0.5rem;
   }
 }
 
@@ -50,20 +50,24 @@
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
   }
-  /* Numeric / mono data gets the terminal feel via .font-mono utility. */
 }
 
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-  /* Subtle scrollbar */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(0 0% 0%);
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
+    background: hsl(0 0% 20%);
     border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 30%);
   }
 }

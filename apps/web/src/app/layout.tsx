@@ -23,7 +23,7 @@ export default function RootLayout({
         <div className="relative flex min-h-screen flex-col">
           <Nav />
           <main className="container flex-1 py-8">{children}</main>
-          <footer className="border-t py-6 text-center text-xs text-muted-foreground font-mono">
+          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground font-mono">
             Soccer Match Predictor · Dixon-Coles model · data refreshed daily
           </footer>
         </div>

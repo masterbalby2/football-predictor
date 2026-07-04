@@ -32,3 +32,37 @@ export function leagueLabel(code: string): string {
       return code;
   }
 }
+
+export function leagueShort(code: string): string {
+  switch (code) {
+    case "EPL":
+      return "EPL";
+    case "LAL":
+      return "LAL";
+    case "BUN":
+      return "BUN";
+    default:
+      return code;
+  }
+}
+
+/** Resolve a URL-friendly league slug to a canonical code. */
+export function resolveLeagueCode(input: string): string | null {
+  const norm = input.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  switch (norm) {
+    case "epl":
+    case "pl":
+    case "premierleague":
+      return "EPL";
+    case "lal":
+    case "laliga":
+    case "spain":
+      return "LAL";
+    case "bun":
+    case "bundesliga":
+    case "germany":
+      return "BUN";
+    default:
+      return null;
+  }
+}
