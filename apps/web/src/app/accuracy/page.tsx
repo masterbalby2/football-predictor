@@ -1,9 +1,11 @@
-import { ChartLine, CheckCircle, X } from "@phosphor-icons/react/ssr";
+import { ChartLine, CheckCircle, X, Target, Gauge } from "@phosphor-icons/react/ssr";
 import { getAccuracy } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LineChart } from "@/components/ui/chart";
+import { PageHeader } from "@/components/page-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WarningCircle } from "@phosphor-icons/react/ssr";
 import { leagueLabel } from "@/lib/utils";
 import type { AccuracyPoint } from "@/lib/api";
 
@@ -37,7 +39,6 @@ export default async function AccuracyPage() {
   const leagues = Array.from(byLeague.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
   // Build chart data: one point per (date, league) with accuracy %.
-  // For the trend chart, we plot accuracy over time per league.
   const dates = Array.from(new Set(history.map((h) => h.date))).sort();
   const chartData = dates.map((date) => {
     const row: Record<string, number | string> = { date: date.slice(5) };
@@ -63,29 +64,26 @@ export default async function AccuracyPage() {
   const overallLogLoss = overall.total > 0 ? overall.logLossSum / overall.total : 0;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-          <ChartLine className="h-6 w-6" />
-          Model Accuracy
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Out-of-sample prediction performance over time
-        </p>
-      </div>
+    <div className="space-y-8 animate-fade-in">
+      <PageHeader
+        icon={ChartLine}
+        title="Model Accuracy"
+        description="Out-of-sample prediction performance over time"
+      />
 
       {error ? (
-        <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
-          Unable to load accuracy data right now.
-        </div>
+        <Alert variant="outline">
+          <WarningCircle className="h-4 w-4" />
+          <AlertDescription>Unable to load accuracy data right now.</AlertDescription>
+        </Alert>
       ) : (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardContent className="p-5">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  <CheckCircle className="h-3.5 w-3.5" />
                   Overall Accuracy
                 </div>
                 <div className="mt-2 font-mono text-3xl tabular-nums">
@@ -98,7 +96,8 @@ export default async function AccuracyPage() {
             </Card>
             <Card>
               <CardContent className="p-5">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  <Target className="h-3.5 w-3.5" />
                   Matches Sampled
                 </div>
                 <div className="mt-2 font-mono text-3xl tabular-nums">
@@ -111,7 +110,8 @@ export default async function AccuracyPage() {
             </Card>
             <Card>
               <CardContent className="p-5">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  <Gauge className="h-3.5 w-3.5" />
                   Brier Score
                 </div>
                 <div className="mt-2 font-mono text-3xl tabular-nums">
@@ -119,6 +119,20 @@ export default async function AccuracyPage() {
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground font-mono tabular-nums">
                   lower is better (0.222 = random)
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                  <ChartLine className="h-3.5 w-3.5" />
+                  Log-Loss
+                </div>
+                <div className="mt-2 font-mono text-3xl tabular-nums">
+                  {overallLogLoss.toFixed(4)}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground font-mono tabular-nums">
+                  lower is better
                 </div>
               </CardContent>
             </Card>
@@ -170,7 +184,7 @@ export default async function AccuracyPage() {
                     key={code}
                     className="grid grid-cols-6 gap-4 py-2.5 items-center"
                   >
-                    <span className="text-sm">{leagueLabel(code)}</span>
+                    <span className="text-sm font-medium">{leagueLabel(code)}</span>
                     <span className="text-right font-mono text-sm tabular-nums">
                       {h.correct}
                     </span>
@@ -222,20 +236,13 @@ export default async function AccuracyPage() {
                 predictions (lower is better).
               </p>
               <p>
-                The Dixon-Coles model estimates team attack and defense
-                parameters via maximum likelihood, with time-decay weighting so
-                recent matches matter more. Low-score correction adjusts the
-                Poisson probabilities for the well-known under-representation of
-                draws in pure Poisson models.
-              </p>
-              <p>
                 This is a statistical baseline, not a betting tip. Football is
                 inherently unpredictable — even a 60% accuracy is strong for
                 this kind of model. See{" "}
                 <a href="/about" className="underline hover:text-foreground">
                   /about
                 </a>{" "}
-                for limitations.
+                for model limitations.
               </p>
             </CardContent>
           </Card>

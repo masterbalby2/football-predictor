@@ -1,22 +1,30 @@
 import Link from "next/link";
-import { Info, Shield, Sword, ChartLine } from "@phosphor-icons/react/ssr";
+import { Info, Shield, Sword, WarningCircle, Database, ChartLine } from "@phosphor-icons/react/ssr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PageHeader } from "@/components/page-header";
 
 export const metadata = { title: "About — Predictor" };
 
 export default function AboutPage() {
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-          <Info className="h-6 w-6" />
-          About the Model
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          How the Soccer Match Predictor works, and where it falls short.
-        </p>
-      </div>
+    <div className="space-y-8 max-w-3xl animate-fade-in">
+      <PageHeader
+        icon={Info}
+        title="About the Model"
+        description="How the Soccer Match Predictor works, and where it falls short."
+      />
+
+      {/* Disclaimer alert */}
+      <Alert variant="outline">
+        <WarningCircle className="h-4 w-4" />
+        <AlertTitle>Statistical baseline, not a betting tip</AlertTitle>
+        <AlertDescription>
+          This model is for educational purposes. It does not account for
+          injuries, weather, or tactical context. A 50-60% accuracy is a
+          strong result for this type of model, but it does not guarantee profit.
+        </AlertDescription>
+      </Alert>
 
       <Card>
         <CardHeader>
@@ -30,21 +38,21 @@ export default function AboutPage() {
             standard statistical baseline for football match prediction. Each
             team is assigned two parameters:
           </p>
-          <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="flex items-start gap-2">
-              <Sword className="h-4 w-4 mt-0.5 shrink-0" />
+          <div className="grid grid-cols-1 gap-4 py-2 sm:grid-cols-2">
+            <div className="flex items-start gap-2.5 rounded-lg border border-border bg-secondary/30 p-4">
+              <Sword className="h-5 w-5 mt-0.5 shrink-0" />
               <div>
                 <div className="font-medium">Attack strength</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   How many goals a team scores relative to the league average.
                 </div>
               </div>
             </div>
-            <div className="flex items-start gap-2">
-              <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2.5 rounded-lg border border-border bg-secondary/30 p-4">
+              <Shield className="h-5 w-5 mt-0.5 shrink-0" />
               <div>
                 <div className="font-medium">Defense strength</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   How many goals a team concedes relative to the league average.
                 </div>
               </div>
@@ -55,7 +63,7 @@ export default function AboutPage() {
             <strong>maximum likelihood optimization</strong> (Adam optimizer with
             gradient ascent). A <strong>time-decay weighting</strong> is applied
             so that recent matches carry more influence than old ones — the
-            half-life is set to ~180 days.
+            half-life is set to ~365 days.
           </p>
           <p>
             For each fixture, the model computes the expected goals for both
@@ -135,7 +143,8 @@ export default function AboutPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
+            <Database className="h-4 w-4" />
             Data Source
           </CardTitle>
         </CardHeader>
@@ -156,16 +165,16 @@ export default function AboutPage() {
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Alert variant="muted">
         <ChartLine className="h-4 w-4" />
-        <span>
+        <AlertDescription>
           See{" "}
           <Link href="/accuracy" className="underline hover:text-foreground">
             /accuracy
           </Link>{" "}
-          for current model performance.
-        </span>
-      </div>
+          for current model performance metrics including Brier score and log-loss.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

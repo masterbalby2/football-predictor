@@ -11,6 +11,9 @@
     --card: 0 0% 4%;              /* near-black cards */
     --card-foreground: 0 0% 100%;
 
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
+
     --primary: 0 0% 100%;         /* white as primary */
     --primary-foreground: 0 0% 0%;
 
@@ -32,11 +35,11 @@
     --warning: 0 0% 100%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 0 0% 20%;           /* thin gray borders */
-    --input: 0 0% 20%;
+    --border: 0 0% 18%;           /* thin gray borders */
+    --input: 0 0% 18%;
     --ring: 0 0% 80%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
   }
 }
 
@@ -50,11 +53,32 @@
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
   }
+  /* Subtle grid background for the body — gives a "terminal/analytics" feel */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, hsl(0 0% 8%) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 8%) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: -1;
+    mask-image: radial-gradient(ellipse at top, hsl(0 0% 100% / 0.03), transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at top, hsl(0 0% 100% / 0.03), transparent 70%);
+  }
 }
 
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+  /* Focus ring for keyboard navigation */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
   }
   ::-webkit-scrollbar {
     width: 6px;
@@ -69,5 +93,13 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(0 0% 30%);
+  }
+  /* Fade-in animation for content */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
   }
 }

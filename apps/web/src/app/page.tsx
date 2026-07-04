@@ -1,9 +1,13 @@
 import { Suspense } from "react";
-import { SoccerBall } from "@phosphor-icons/react/ssr";
+import { SoccerBall, CalendarX } from "@phosphor-icons/react/ssr";
 import { getFixtures } from "@/lib/api";
 import { FixtureCard } from "@/components/fixture-card";
 import { FixtureGridSkeleton } from "@/components/fixture-card-skeleton";
 import { LeagueFilter } from "@/components/league-filter";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WarningCircle } from "@phosphor-icons/react/ssr";
 import { leagueLabel } from "@/lib/utils";
 import type { FixtureWithPrediction } from "@/lib/api";
 
@@ -34,38 +38,39 @@ export default async function HomePage() {
     (i) => new Date(i.fixture.date).toDateString() === todayStr,
   );
   const display = todays.length > 0 ? todays : items.slice(0, 12);
+  const showingToday = todays.length > 0;
 
   return (
-    <div className="space-y-8">
-      {/* Page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <SoccerBall className="h-6 w-6" weight="fill" />
-            Today&apos;s Predictions
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Dixon-Coles model · EPL · La Liga · Bundesliga
-          </p>
-        </div>
-        <LeagueFilter />
-      </div>
+    <div className="space-y-8 animate-fade-in">
+      <PageHeader
+        icon={SoccerBall}
+        title={showingToday ? "Today's Predictions" : "Upcoming Predictions"}
+        description={
+          showingToday
+            ? "Dixon-Coles model · EPL · La Liga · Bundesliga"
+            : "No matches today — showing upcoming fixtures"
+        }
+        actions={<LeagueFilter />}
+      />
 
       {error ? (
-        <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
-          {error}
-        </div>
+        <Alert variant="outline">
+          <WarningCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : display.length === 0 ? (
-        <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
-          No upcoming fixtures. Check back later.
-        </div>
+        <EmptyState
+          icon={CalendarX}
+          title="No upcoming fixtures"
+          description="Check back later for new predictions."
+        />
       ) : (
         <Suspense fallback={<FixtureGridSkeleton count={6} />}>
           <div className="space-y-8">
             {groupByLeague(display).map(([code, leagueItems]) => (
               <section key={code} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
                     {leagueLabel(code)}
                   </h2>
                   <span className="font-mono text-xs text-muted-foreground tabular-nums">
