@@ -41,7 +41,8 @@ export class FootballDataScraper implements FootballDataProvider {
   private token: string;
 
   constructor(env: Env) {
-    this.token = env.FOOTBALL_DATA_API_TOKEN;
+    // Prefer FOOTBALL_DATA_API_KEY (spec naming), fall back to TOKEN.
+    this.token = env.FOOTBALL_DATA_API_KEY || env.FOOTBALL_DATA_API_TOKEN;
     this.client = axios.create({
       baseURL: env.FOOTBALL_DATA_BASE_URL,
       timeout: 15000,

@@ -31,6 +31,9 @@ const EnvSchema = z.object({
 
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
 
+  // football-data.org API token. Accepts either FOOTBALL_DATA_API_KEY
+  // (per spec naming) or FOOTBALL_DATA_API_TOKEN (football-data.org convention).
+  FOOTBALL_DATA_API_KEY: z.string().optional().default(""),
   FOOTBALL_DATA_API_TOKEN: z.string().optional().default(""),
   FOOTBALL_DATA_BASE_URL: z
     .string()
@@ -41,6 +44,7 @@ const EnvSchema = z.object({
   DC_RIDGE_LAMBDA: num(0.002),
   DC_MAX_GOALS: num(10),
   DC_MIN_MATCHES: num(20),
+  MODEL_VERSION: z.string().default("DC-1"),
 
   API_HOST: z.string().default("0.0.0.0"),
   API_PORT: num(4000),
@@ -58,6 +62,7 @@ const EnvSchema = z.object({
   CRON_LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error"])
     .default("info"),
+  CRON_LOCK_TTL_SECONDS: num(600),
 
   NODE_ENV: z.string().default("development"),
 });
