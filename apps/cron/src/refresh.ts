@@ -33,24 +33,26 @@ export interface RefreshResult {
   totalFixtures: number;
   predictions: number;
   accuracy: { leagueCode: LeagueCode; total: number; correct: number; accuracy: number }[];
-  source: "football-data.org" | "seed";
+  source: "football-data.org";
 }
 
 /**
- * Pull data (from football-data.org if a token is configured, else rely on
- * existing seed data), fit a Dixon-Coles model per league, predict upcoming
- * fixtures, and log out-of-sample accuracy. Idempotent per run.
+ * Pull data from football-data.org, fit a Dixon-Coles model per league,
+ * predict upcoming fixtures, and log out-of-sample accuracy.
+ * Requires FOOTBALL_DATA_API_KEY to be set.
  */
 export async function runRefresh(env: Env): Promise<RefreshResult> {
   const sql = getDb(env);
   const scraper = new FootballDataScraper(env);
-  const useFd = scraper.available();
+
+  if (!scraper.available()) {
+    throw new Error(
+      "FOOTBALL_DATA_API_KEY is not set. Register at https://www.football-data.org/client/register to get a free token.",
+    );
+  }
 
   await upsertLeagues(sql);
-
-  if (useFd) {
-    await ingestFromProvider(sql, scraper);
-  }
+  await ingestFromProvider(sql, scraper);
 
   const fitOpts = {
     ...DEFAULT_FIT_OPTIONS,
@@ -173,7 +175,7 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
     totalFixtures: fixtures.length,
     predictions,
     accuracy: accuracyRows,
-    source: useFd ? "football-data.org" : "seed",
+    source: "football-data.org",
   };
 }
 
@@ -183,6 +185,7 @@ async function ingestFromProvider(
 ): Promise<void> {
   for (const leagueCode of LEAGUE_CODES) {
     console.log(`[${leagueCode}] fetching from football-data.org...`);
+    // Fetch teams from the data season (for historical matches).
     const teams = await scraper.fetchTeams(leagueCode);
     for (const t of teams) {
       await upsertTeam(sql, {
@@ -193,6 +196,23 @@ async function ingestFromProvider(
         fdId: t.externalId,
       });
     }
+    // Also fetch teams from the current (upcoming) season — promoted/relegated
+    // teams may appear in scheduled fixtures but not in the data season.
+    try {
+      const currentTeams = await scraper.fetchTeams(leagueCode, "2026");
+      for (const t of currentTeams) {
+        await upsertTeam(sql, {
+          id: t.id,
+          leagueCode: t.leagueCode,
+          name: t.name,
+          shortName: t.shortName,
+          fdId: t.externalId,
+        });
+      }
+    } catch {
+      // Current season teams may not be available yet — that's OK.
+    }
+
     const finished = await scraper.fetchFinishedMatches(leagueCode);
     for (const m of finished) {
       if (m.homeGoals == null || m.awayGoals == null) continue;

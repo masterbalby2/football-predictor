@@ -1,5 +1,5 @@
 import { loadEnv } from "@soccer/config";
-import { getDb, closeDb, migrate, seedDatabase } from "../index.js";
+import { getDb, closeDb, migrate } from "../index.js";
 
 async function main() {
   const env = loadEnv();
@@ -11,11 +11,7 @@ async function main() {
         ? `Applied migrations: ${applied.join(", ")}`
         : "Schema up to date.",
     );
-    const result = await seedDatabase(sql);
-    console.log(
-      `Seed complete: ${result.teams} teams, ${result.matches} matches, ${result.fixtures} fixtures.`,
-    );
-    console.log("Database ready. Run `pnpm cron:run` to generate predictions.");
+    console.log("Database ready. Run `pnpm cron:run` to fetch data and generate predictions.");
   } finally {
     await closeDb();
   }

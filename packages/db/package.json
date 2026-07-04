@@ -16,7 +16,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist",
     "migrate": "tsx src/cli/migrate.ts",
-    "seed": "tsx src/cli/seed.ts",
     "setup": "tsx src/cli/setup.ts"
   },
   "dependencies": {

@@ -16,7 +16,6 @@
     "dev:bot": "pnpm --filter @soccer/bot run dev",
     "cron:run": "pnpm --filter @soccer/cron run start",
     "db:migrate": "pnpm --filter @soccer/db run migrate",
-    "db:seed": "pnpm --filter @soccer/db run seed",
     "db:setup": "pnpm --filter @soccer/db run setup"
   },
   "devDependencies": {

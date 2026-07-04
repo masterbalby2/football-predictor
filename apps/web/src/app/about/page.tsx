@@ -159,8 +159,8 @@ export default function AboutPage() {
             >
               football-data.org
             </a>
-            . When no API key is configured, the app runs on a deterministic
-            seed dataset for development and demonstration.
+            . The cron job fetches teams, finished matches, and scheduled
+            fixtures daily, then fits the model and generates predictions.
           </p>
         </CardContent>
       </Card>
