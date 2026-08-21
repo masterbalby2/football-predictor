@@ -9,16 +9,58 @@ function poissonPmf(k: number, lambda: number): number {
   return Math.exp(logp);
 }
 
+export interface PredictOptions {
+  delta: number;
+  maxGoals: number;
+  /**
+   * Weight (0–1) given to recent-form adjustment vs. the fitted model.
+   * 0 = pure Dixon-Coles (season-long strength only).
+   * 1 = pure recent form. Typical: 0.15–0.25.
+   */
+  formWeight?: number;
+  /** Multiplicative form factor for the home team's attacking lambda (1 = no change). */
+  homeAttackForm?: number;
+  /** Multiplicative form factor for the away team's attacking lambda (1 = no change). */
+  awayAttackForm?: number;
+  /** Multiplicative defensive form factor for the home team (affects away lambda). */
+  homeDefenseForm?: number;
+  /** Multiplicative defensive form factor for the away team (affects home lambda). */
+  awayDefenseForm?: number;
+}
+
+/**
+ * Derive a human-readable tip from the pick, top probability, and confidence.
+ *
+ * Confidence bands (margin between top prob and runner-up):
+ *   >= 0.20  => "Strong"
+ *   >= 0.08  => "Lean"
+ *   <  0.08  => "Too close to call"
+ */
+function deriveTip(
+  pick: "HOME" | "DRAW" | "AWAY",
+  topProb: number,
+  confidence: number,
+): string {
+  if (confidence < 0.08) return "Too close to call";
+  const label =
+    pick === "HOME" ? "Home Win" : pick === "AWAY" ? "Away Win" : "Draw";
+  const strength = confidence >= 0.2 ? "Strong" : "Lean";
+  // High-probability draws are rare and worth flagging as value.
+  if (pick === "DRAW" && topProb >= 0.3) return `Value Draw`;
+  return `${strength} ${label}`;
+}
+
 /**
  * Predict a single fixture from a fitted model.
  * Returns W/D/L probabilities, expected goals, the full scoreline grid,
- * and the top-3 most likely scorelines (Dixon-Coles corrected).
+ * the top-3 most likely scorelines (Dixon-Coles corrected), a confidence
+ * score, and a human-readable tip.
  */
 export function predict(
   fit: FitResult,
   homeTeamId: string,
   awayTeamId: string,
-  options: { delta: number; maxGoals: number },
+  options: PredictOptions,
 ): PredictionResult | null {
   const home = fit.teams.find((t) => t.teamId === homeTeamId);
   const away = fit.teams.find((t) => t.teamId === awayTeamId);
@@ -26,8 +68,27 @@ export function predict(
 
   const logLh = fit.intercept + home.attack - away.defense + fit.homeAdvantage;
   const logLa = fit.intercept + away.attack - home.defense;
-  const lh = Math.exp(logLh);
-  const la = Math.exp(logLa);
+  let lh = Math.exp(logLh);
+  let la = Math.exp(logLa);
+
+  // Apply recent-form adjustment (real-life recent performance).
+  // Home attacking form scales home lambda up/down; away defensive form
+  // also scales home lambda (a leaky away defense => more home goals).
+  // Symmetric for the away lambda.
+  const formWeight = options.formWeight ?? 0;
+  if (formWeight > 0) {
+    const hAtk = options.homeAttackForm ?? 1;
+    const aAtk = options.awayAttackForm ?? 1;
+    const hDef = options.homeDefenseForm ?? 1;
+    const aDef = options.awayDefenseForm ?? 1;
+    // Combined factor per team: blend attacking form of scorer and defensive
+    // form of conceder. Geometric mean keeps the adjustment multiplicative
+    // and symmetric.
+    const homeFactor = Math.sqrt(hAtk * aDef);
+    const awayFactor = Math.sqrt(aAtk * hDef);
+    lh *= (1 - formWeight) + formWeight * homeFactor;
+    la *= (1 - formWeight) + formWeight * awayFactor;
+  }
 
   const maxG = options.maxGoals;
   const matrix: number[][] = Array.from({ length: maxG + 1 }, () =>
@@ -84,6 +145,11 @@ export function predict(
         ? "DRAW"
         : "AWAY";
 
+  // Confidence: margin between the top probability and the runner-up.
+  const sortedProbs = [homeWin, draw, awayWin].sort((a, b) => b - a);
+  const confidence = Number((sortedProbs[0] - sortedProbs[1]).toFixed(4));
+  const tip = deriveTip(pick, sortedProbs[0], confidence);
+
   return {
     homeWinProb: Number(homeWin.toFixed(4)),
     drawProb: Number(draw.toFixed(4)),
@@ -92,6 +158,8 @@ export function predict(
     expectedAwayGoals: Number(la.toFixed(3)),
     topScorelines: top3,
     pick,
+    confidence,
+    tip,
     scoreMatrix: matrix,
   };
 }

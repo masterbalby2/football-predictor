@@ -60,18 +60,28 @@ export function FixtureCard({ item }: { item: FixtureWithPrediction }) {
             <>
               <PredictionBar prediction={prediction} />
               <div className="flex items-center justify-between pt-0.5">
-                <div className="flex items-center gap-1.5">
-                  <ChartBar className="h-3 w-3 text-muted-foreground" />
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ChartBar className="h-3 w-3 text-muted-foreground shrink-0" />
                   <ScorelineList
                     scorelines={prediction.topScorelines}
                     limit={1}
                   />
                 </div>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
                   Details
                   <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </div>
+              {prediction.tip && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {prediction.tip}
+                  </span>
+                  <span className="font-mono tabular-nums text-muted-foreground">
+                    {(prediction.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex items-center justify-between pt-0.5">

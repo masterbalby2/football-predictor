@@ -49,6 +49,16 @@ export interface PredictionResult {
   expectedAwayGoals: number;
   topScorelines: Scoreline[];
   pick: "HOME" | "DRAW" | "AWAY";
+  /**
+   * Confidence in the pick: the margin between the top probability and the
+   * runner-up. Higher = more confident. Range [0, 1].
+   */
+  confidence: number;
+  /**
+   * Human-readable suggestion derived from the pick + confidence + value.
+   * Examples: "Strong Home Win", "Lean Draw", "Too close to call".
+   */
+  tip: string;
   /** Full P(home=x, away=y) grid, indexed [x][y]. */
   scoreMatrix: number[][];
 }

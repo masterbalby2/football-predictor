@@ -51,3 +51,27 @@ export async function cacheSet(
     /* ignore */
   }
 }
+
+/**
+ * Best-effort cache flush. Clears all cached API responses so the next
+ * request re-reads from the database. Used by POST /refresh for real-time
+ * updates after a cron data refresh.
+ */
+export async function cacheFlush(env: Env): Promise<number> {
+  try {
+    const r = getRedis(env);
+    // SCAN-based deletion to avoid blocking Redis with KEYS on large keyspaces.
+    let cursor = "0";
+    let deleted = 0;
+    do {
+      const [next, keys] = await r.scan(cursor, "COUNT", 200);
+      cursor = next;
+      if (keys.length > 0) {
+        deleted += await r.del(...keys);
+      }
+    } while (cursor !== "0");
+    return deleted;
+  } catch {
+    return 0;
+  }
+}

@@ -139,4 +139,13 @@ export const migrations: Migration[] = [
         ADD COLUMN IF NOT EXISTS log_loss   DOUBLE PRECISION DEFAULT 0;
     `,
   },
+  {
+    id: "0006_prediction_confidence_tip",
+    description: "Add confidence and tip columns to predictions",
+    sql: `
+      ALTER TABLE predictions
+        ADD COLUMN IF NOT EXISTS confidence DOUBLE PRECISION NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS tip        TEXT NOT NULL DEFAULT '';
+    `,
+  },
 ];

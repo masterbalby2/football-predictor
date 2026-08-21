@@ -18,6 +18,8 @@ import {
   fitModel,
   predict,
   walkForwardEval,
+  computeFormFactor,
+  computeDefensiveFormFactor,
   DEFAULT_FIT_OPTIONS,
   type MatchInput,
 } from "@soccer/model";
@@ -62,12 +64,19 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
     maxGoals: env.DC_MAX_GOALS,
     minMatches: env.DC_MIN_MATCHES,
   };
+  const formWeight = env.DC_FORM_WEIGHT;
+  const formRecentN = env.DC_FORM_RECENT_N;
 
   let totalMatches = 0;
   const strengths: TeamStrength[] = [];
   const accuracyRows: RefreshResult["accuracy"] = [];
   const leagueCodesUsed: LeagueCode[] = [];
   const fitsByLeague = new Map<LeagueCode, ReturnType<typeof fitModel>>();
+  // Per-league form factors: teamId -> { attack, defense } multiplicative factor.
+  const formByLeague = new Map<
+    LeagueCode,
+    Map<string, { attack: number; defense: number }>
+  >();
 
   // Single model run covering all leagues.
   const modelRunId = await createModelRun(sql, LEAGUE_CODES, 0);
@@ -108,6 +117,32 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
       });
     }
 
+    // Compute recent-form factors per team for this league.
+    // League-average goals scored per game by a single team = total goals / (2 * matches).
+    if (formWeight > 0 && matchInputs.length > 0) {
+      let totalGoals = 0;
+      for (const m of matchInputs) totalGoals += m.homeGoals + m.awayGoals;
+      const leagueAvgGoalsFor = totalGoals / (matchInputs.length * 2);
+      const formMap = new Map<string, { attack: number; defense: number }>();
+      for (const t of fit.teams) {
+        formMap.set(t.teamId, {
+          attack: computeFormFactor({
+            teamId: t.teamId,
+            matches: matchInputs,
+            recentN: formRecentN,
+            leagueAvgGoalsFor,
+          }),
+          defense: computeDefensiveFormFactor({
+            teamId: t.teamId,
+            matches: matchInputs,
+            recentN: formRecentN,
+            leagueAvgGoalsFor,
+          }),
+        });
+      }
+      formByLeague.set(leagueCode, formMap);
+    }
+
     // Out-of-sample accuracy via walk-forward (rolling-origin) validation:
     // repeatedly fit on the first k matches, evaluate on the next batch.
     // This is more robust than a single train/test split.
@@ -146,9 +181,17 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
   for (const f of fixtures) {
     const fit = fitsByLeague.get(f.leagueCode);
     if (!fit) continue;
+    const formMap = formByLeague.get(f.leagueCode);
+    const homeForm = formMap?.get(f.homeTeamId);
+    const awayForm = formMap?.get(f.awayTeamId);
     const p = predict(fit, f.homeTeamId, f.awayTeamId, {
       delta: fitOpts.delta,
       maxGoals: fitOpts.maxGoals,
+      formWeight,
+      homeAttackForm: homeForm?.attack,
+      awayAttackForm: awayForm?.attack,
+      homeDefenseForm: homeForm?.defense,
+      awayDefenseForm: awayForm?.defense,
     });
     if (!p) continue;
     await savePrediction(sql, {
@@ -161,6 +204,8 @@ export async function runRefresh(env: Env): Promise<RefreshResult> {
       expectedAwayGoals: p.expectedAwayGoals,
       topScorelines: p.topScorelines,
       pick: p.pick,
+      confidence: p.confidence,
+      tip: p.tip,
     });
     predictions++;
   }

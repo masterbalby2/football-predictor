@@ -347,12 +347,12 @@ export async function savePrediction(
   await sql`
     INSERT INTO predictions
       (fixture_id, model_run_id, home_win_prob, draw_prob, away_win_prob,
-       expected_home_goals, expected_away_goals, top_scorelines, pick)
+       expected_home_goals, expected_away_goals, top_scorelines, pick, confidence, tip)
     VALUES
       (${p.fixtureId}, ${p.modelRunId}, ${p.homeWinProb}, ${p.drawProb}, ${p.awayWinProb},
        ${p.expectedHomeGoals}, ${p.expectedAwayGoals}, ${JSON.stringify(
          p.topScorelines,
-       )}::jsonb, ${p.pick})
+       )}::jsonb, ${p.pick}, ${p.confidence ?? 0}, ${p.tip ?? ""})
     ON CONFLICT (fixture_id, model_run_id) DO UPDATE SET
       home_win_prob = EXCLUDED.home_win_prob,
       draw_prob = EXCLUDED.draw_prob,
@@ -360,7 +360,9 @@ export async function savePrediction(
       expected_home_goals = EXCLUDED.expected_home_goals,
       expected_away_goals = EXCLUDED.expected_away_goals,
       top_scorelines = EXCLUDED.top_scorelines,
-      pick = EXCLUDED.pick`;
+      pick = EXCLUDED.pick,
+      confidence = EXCLUDED.confidence,
+      tip = EXCLUDED.tip`;
 }
 
 export async function getPredictionForFixture(
@@ -371,7 +373,7 @@ export async function getPredictionForFixture(
     SELECT id::text AS id, fixture_id, model_run_id::text AS model_run_id,
            home_win_prob, draw_prob, away_win_prob,
            expected_home_goals, expected_away_goals,
-           top_scorelines, pick, created_at::text AS created_at
+           top_scorelines, pick, confidence, tip, created_at::text AS created_at
     FROM predictions
     WHERE fixture_id = ${fixtureId}
     ORDER BY created_at DESC LIMIT 1`;
@@ -388,6 +390,8 @@ export async function getPredictionForFixture(
     expectedAwayGoals: r.expected_away_goals,
     topScorelines: typeof r.top_scorelines === "string" ? JSON.parse(r.top_scorelines) : r.top_scorelines,
     pick: r.pick,
+    confidence: r.confidence ?? 0,
+    tip: r.tip ?? "",
     createdAt: r.created_at,
   } as Prediction;
 }
@@ -402,7 +406,7 @@ export async function getPredictionsForFixtures(
            fixture_id, id::text AS id, model_run_id::text AS model_run_id,
            home_win_prob, draw_prob, away_win_prob,
            expected_home_goals, expected_away_goals,
-           top_scorelines, pick, created_at::text AS created_at
+           top_scorelines, pick, confidence, tip, created_at::text AS created_at
     FROM predictions
     WHERE fixture_id IN ${sql(fixtureIds)}
     ORDER BY fixture_id, created_at DESC`;
@@ -419,6 +423,8 @@ export async function getPredictionsForFixtures(
       expectedAwayGoals: r.expected_away_goals,
       topScorelines: typeof r.top_scorelines === "string" ? JSON.parse(r.top_scorelines) : r.top_scorelines,
       pick: r.pick,
+      confidence: r.confidence ?? 0,
+      tip: r.tip ?? "",
       createdAt: r.created_at,
     } as Prediction);
   }

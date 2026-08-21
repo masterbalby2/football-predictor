@@ -89,6 +89,10 @@ export const PredictionSchema = z.object({
   topScorelines: z.array(ScorelineSchema).max(3),
   // Most likely outcome label
   pick: z.enum(["HOME", "DRAW", "AWAY"]),
+  // Confidence in the pick: margin between top prob and runner-up [0, 1].
+  confidence: z.number().default(0),
+  // Human-readable suggestion, e.g. "Strong Home Win", "Value Draw".
+  tip: z.string().default(""),
   createdAt: z.string(),
 });
 export type Prediction = z.infer<typeof PredictionSchema>;

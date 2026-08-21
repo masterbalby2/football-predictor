@@ -44,6 +44,11 @@ const EnvSchema = z.object({
   DC_RIDGE_LAMBDA: num(0),
   DC_MAX_GOALS: num(10),
   DC_MIN_MATCHES: num(20),
+  // Recent-form adjustment: weight given to last-N-matches form vs. season strength.
+  // 0 = pure Dixon-Coles (season-long only). 0.2 = 20% form, 80% season strength.
+  DC_FORM_WEIGHT: num(0.2),
+  // Number of most-recent matches used to compute the form factor.
+  DC_FORM_RECENT_N: num(6),
   MODEL_VERSION: z.string().default("DC-1"),
 
   API_HOST: z.string().default("0.0.0.0"),

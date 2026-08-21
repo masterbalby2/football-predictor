@@ -21,14 +21,14 @@ import {
   getAccuracyHistory,
   getLatestModelRun,
 } from "@soccer/db";
-import { cacheGet, cacheSet, closeRedis } from "./cache.js";
+import { cacheGet, cacheSet, cacheFlush, closeRedis } from "./cache.js";
 import {
   LeagueCodeSchema,
   type TeamDetail,
   type FixtureWithPrediction,
 } from "@soccer/shared-types";
 
-const CACHE_TTL = 60; // seconds — short, since cron refreshes daily
+const CACHE_TTL = 30; // seconds — short for near-real-time freshness
 
 /**
  * Bearer token auth hook. If API_AUTH_TOKEN is set, all requests
@@ -75,7 +75,7 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
   const origins = env.API_CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean);
   await app.register(cors, {
     origin: origins.length ? origins : true,
-    methods: ["GET"],
+    methods: ["GET", "POST"],
   });
 
   // Swagger / OpenAPI docs at /docs
@@ -293,6 +293,25 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
     const result = { latestRun: latest, history };
     await cacheSet(env, cacheKey, result, CACHE_TTL);
     return result;
+  });
+
+  /* ---- refresh (real-time cache flush) ---- */
+  app.post("/refresh", {
+    schema: {
+      tags: ["system"],
+      summary:
+        "Flush the API cache so subsequent reads pull fresh data from the DB. " +
+        "Call this after running the cron refresh to make new predictions visible immediately.",
+    },
+  }, async () => {
+    const flushed = await cacheFlush(env);
+    const sql = getDb(env);
+    const latestRun = await getLatestModelRun(sql);
+    return {
+      status: "ok",
+      cacheKeysFlushed: flushed,
+      latestRun,
+    };
   });
 
   return app;

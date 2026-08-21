@@ -189,7 +189,22 @@ export default async function MatchPage({ params }: PageProps) {
         {/* Prediction Tab */}
         <TabsContent value="prediction" className="space-y-6">
           {prediction ? (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <>
+              {/* Tip + confidence banner */}
+              {prediction.tip && (
+                <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      Suggestion: {prediction.tip}
+                    </span>
+                  </div>
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                    confidence {(prediction.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {/* W/D/L probabilities */}
               <Card>
                 <CardHeader>
@@ -234,6 +249,7 @@ export default async function MatchPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             </div>
+            </>
           ) : (
             <EmptyState
               icon={ChartBar}
