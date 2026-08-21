@@ -1,8 +1,8 @@
 {
-  "name": "soccer-predictor",
+  "name": "football-predictor",
   "version": "0.1.0",
   "private": true,
-  "description": "Dixon-Coles EPL/La Liga/Bundesliga match predictor (web + Telegram bot)",
+  "description": "AI-powered football match predictor using Dixon-Coles Poisson model with recent-form adjustment. EPL, La Liga, Bundesliga predictions with win/draw/loss probabilities, scoreline forecasts, and confidence-rated tips.",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=20"

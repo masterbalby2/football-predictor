@@ -39,7 +39,7 @@ Set these on each service (reference `.env.example`):
 | `NEXT_PUBLIC_API_URL`        |    |  x |     |      | Public URL of the deployed `api` service.         |
 | `API_CORS_ORIGIN`            |  x |    |     |      | Public URL of the deployed `web` service.         |
 | `API_HOST` / `API_PORT`      |  x |    |     |      | `0.0.0.0` / `4000`.                                |
-| `FOOTBALL_DATA_API_TOKEN`    |    |    |     |  x   | Optional. Without it, cron runs on seed data.      |
+| `FOOTBALL_DATA_API_KEY`      |    |    |     |  x   | Required. Free at football-data.org.               |
 | `TELEGRAM_BOT_TOKEN`         |    |    |  x  |      | Optional. Bot runs in dry-run mode without it.     |
 | `TELEGRAM_DIGEST_HOUR_UTC`   |    |    |  x  |      | Default `7`.                                       |
 | `CRON_ONE_SHOT`              |    |    |     |  x   | `true` — cron exits after one refresh (Railway Cron). |
@@ -67,9 +67,9 @@ On the `cron` service:
 ## 6. First deploy
 
 1. Deploy `api` first (it runs migrations).
-2. Deploy `cron` and trigger a run (Railway → Deploy → Redeploy) to populate
-   predictions. Without `FOOTBALL_DATA_API_TOKEN` it will seed the DB with
-   sample data so the dashboard works end-to-end.
+2. Deploy `cron` and trigger a run (Railway → Deploy → Redeploy) to fetch
+   data from football-data.org, fit the model, and populate predictions.
+   Requires `FOOTBALL_DATA_API_KEY` to be set.
 3. Deploy `web` and `bot`.
 
 ## 7. Verify
@@ -85,8 +85,8 @@ On the `cron` service:
 docker compose up -d
 cp .env.example .env
 pnpm install
-pnpm db:setup        # migrate + seed
-pnpm cron:run        # generate predictions
+pnpm db:migrate      # run migrations
+pnpm cron:run        # fetch data + fit model + generate predictions
 pnpm dev:api         # http://localhost:4000
 pnpm dev:web         # http://localhost:3000
 ```
