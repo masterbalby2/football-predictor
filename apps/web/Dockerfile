@@ -28,7 +28,8 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # Copy the standalone Next.js output + static assets.
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+# public/ may be empty or missing — copy only if it exists
+COPY --from=builder /app/apps/web/public* ./apps/web/public
 
 USER nextjs
 EXPOSE 3000
