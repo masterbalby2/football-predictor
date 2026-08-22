@@ -37,37 +37,37 @@ async function main() {
 
   bot.start(async (ctx) =>
     ctx.reply(await cmdWelcome((ctx.from as { first_name?: string })?.first_name), {
-      parse_mode: "Markdown",
+      parse_mode: "HTML",
     }),
   );
-  bot.help(async (ctx) => ctx.reply(await cmdHelp(), { parse_mode: "Markdown" }));
+  bot.help(async (ctx) => ctx.reply(await cmdHelp(), { parse_mode: "HTML" }));
 
   bot.command("today", async (ctx) => {
     const text = await cmdToday(env);
-    ctx.reply(text, { parse_mode: "Markdown" });
+    ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("league", async (ctx) => {
     const arg = ctx.message.text.split(/\s+/).slice(1).join(" ");
     const text = await cmdLeague(env, arg);
-    ctx.reply(text, { parse_mode: "Markdown" });
+    ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("match", async (ctx) => {
     const arg = ctx.message.text.split(/\s+/).slice(1).join(" ");
     const text = await cmdMatch(env, arg);
-    ctx.reply(text, { parse_mode: "Markdown" });
+    ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("team", async (ctx) => {
     const arg = ctx.message.text.split(/\s+/).slice(1).join(" ");
     const text = await cmdTeam(env, arg);
-    ctx.reply(text, { parse_mode: "Markdown" });
+    ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("accuracy", async (ctx) => {
     const text = await cmdAccuracy(env);
-    ctx.reply(text, { parse_mode: "Markdown" });
+    ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("subscribe", async (ctx) => {
@@ -87,7 +87,7 @@ async function main() {
   // Daily digest scheduler (reads from Postgres directly, batched sends).
   startDigestScheduler(env, {
     sendMessage: (chatId, text) =>
-      bot.telegram.sendMessage(chatId, text, { parse_mode: "Markdown" }),
+      bot.telegram.sendMessage(chatId, text, { parse_mode: "HTML" }),
   });
 
   bot.catch((err) => console.error("[bot] error:", err));

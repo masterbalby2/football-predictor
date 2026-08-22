@@ -16,6 +16,7 @@ import {
 } from "@soccer/db";
 import type { LeagueCode } from "@soccer/shared-types";
 import { resolveLeagueCode } from "./labels.js";
+import { escapeHtml } from "./format.js";
 import {
   formatHelp,
   formatWelcome,
@@ -60,8 +61,8 @@ export async function cmdLeague(env: Env, input: string): Promise<string> {
   const code = resolveLeagueCode(input);
   if (!code) {
     return (
-      "Unknown league. Try one of: `epl`, `laliga`, `bundesliga` " +
-      "(or `EPL`, `LAL`, `BUN`)."
+      "Unknown league. Try one of: <code>epl</code>, <code>laliga</code>, <code>bundesliga</code> " +
+      "(or <code>EPL</code>, <code>LAL</code>, <code>BUN</code>)."
     );
   }
   const items = await loadFixturesWithPredictions(env, code, 20);
@@ -74,11 +75,11 @@ export async function cmdLeague(env: Env, input: string): Promise<string> {
  */
 export async function cmdMatch(env: Env, name: string): Promise<string> {
   if (!name.trim()) {
-    return "Usage: /match `<team name>` — e.g. /match Arsenal";
+    return "Usage: /match <code>team name</code> — e.g. /match Arsenal";
   }
   const sql = getDb(env);
   const team = await findTeamByName(sql, name);
-  if (!team) return `No team matched "${name}".`;
+  if (!team) return `No team matched "${escapeHtml(name)}".`;
 
   // Find upcoming fixtures involving this team.
   const fixtures = await getFixtures(sql, { from: new Date(), limit: 300 });
@@ -86,7 +87,7 @@ export async function cmdMatch(env: Env, name: string): Promise<string> {
     (f) => f.homeTeamId === team.id || f.awayTeamId === team.id,
   );
   if (!next) {
-    return `No upcoming fixture found for *${team.name}*.`;
+    return `No upcoming fixture found for <b>${escapeHtml(team.name)}</b>.`;
   }
   const prediction = await getPredictionForFixture(sql, next.id);
   return formatMatchBreakdown({ fixture: next, prediction });
@@ -95,7 +96,7 @@ export async function cmdMatch(env: Env, name: string): Promise<string> {
 export async function cmdTeam(env: Env, name: string): Promise<string> {
   const sql = getDb(env);
   const team = await findTeamByName(sql, name);
-  if (!team) return `No team matched "${name}".`;
+  if (!team) return `No team matched "${escapeHtml(name)}".`;
   const strength = await getStrengthForTeam(sql, team.id);
   const recent = await getRecentMatchesForTeam(sql, team.id, 6);
   const opponentIds = new Set(recent.flatMap((m) => [m.homeTeamId, m.awayTeamId]));
