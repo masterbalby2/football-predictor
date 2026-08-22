@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-# ---- Base: install pnpm + deps for the whole monorepo ----
+# ---- Base: install pnpm ----
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
@@ -14,17 +14,14 @@ COPY packages/ ./packages/
 COPY apps/ ./apps/
 RUN pnpm install --frozen-lockfile || pnpm install
 RUN pnpm -r run build
+# Create a self-contained deploy bundle with real files (no symlinks).
+# pnpm deploy resolves all workspace + external deps into a flat node_modules.
+RUN pnpm deploy --filter=@soccer/api --prod --legacy /app/deploy
 
 # ---- API runtime ----
-FROM base AS api
+FROM node:22-alpine AS api
 ENV NODE_ENV=production
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder /app/package.json ./package.json
-WORKDIR /app/apps/api
+WORKDIR /app
+COPY --from=builder /app/deploy ./
 EXPOSE 4000
 CMD ["node", "dist/index.js"]
