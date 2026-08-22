@@ -29,7 +29,7 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   DB_RUN_MIGRATIONS: bool.default("true"),
 
-  REDIS_URL: z.string().min(1, "REDIS_URL is required"),
+  REDIS_URL: z.string().optional().default(""),
 
   // football-data.org API token. Accepts either FOOTBALL_DATA_API_KEY
   // (per spec naming) or FOOTBALL_DATA_API_TOKEN (football-data.org convention).

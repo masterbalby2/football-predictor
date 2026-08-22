@@ -3,7 +3,8 @@ import type { Env } from "@soccer/config";
 
 let redis: Redis | null = null;
 
-export function getRedis(env: Env): Redis {
+export function getRedis(env: Env): Redis | null {
+  if (!env.REDIS_URL) return null;
   if (redis) return redis;
   redis = new Redis(env.REDIS_URL, {
     maxRetriesPerRequest: 2,
@@ -29,7 +30,9 @@ export async function closeRedis(): Promise<void> {
  */
 export async function cacheGet<T>(env: Env, key: string): Promise<T | null> {
   try {
-    const raw = await getRedis(env).get(key);
+    const r = getRedis(env);
+    if (!r) return null;
+    const raw = await r.get(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -46,7 +49,9 @@ export async function cacheSet(
   ttlSeconds: number,
 ): Promise<void> {
   try {
-    await getRedis(env).set(key, JSON.stringify(value), "EX", ttlSeconds);
+    const r = getRedis(env);
+    if (!r) return;
+    await r.set(key, JSON.stringify(value), "EX", ttlSeconds);
   } catch {
     /* ignore */
   }
@@ -60,6 +65,7 @@ export async function cacheSet(
 export async function cacheFlush(env: Env): Promise<number> {
   try {
     const r = getRedis(env);
+    if (!r) return 0;
     // SCAN-based deletion to avoid blocking Redis with KEYS on large keyspaces.
     let cursor = "0";
     let deleted = 0;
