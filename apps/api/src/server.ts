@@ -320,9 +320,12 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
 export async function startServer(): Promise<void> {
   const env = loadEnv();
   const app = await buildServer(env);
+  // Railway and other hosts may provide a PORT env var that should take
+  // precedence over the configured API_PORT.
+  const port = process.env.PORT ? Number(process.env.PORT) : env.API_PORT;
   try {
-    await app.listen({ host: env.API_HOST, port: env.API_PORT });
-    console.log(`API listening on http://${env.API_HOST}:${env.API_PORT}`);
+    await app.listen({ host: env.API_HOST, port });
+    console.log(`API listening on http://${env.API_HOST}:${port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

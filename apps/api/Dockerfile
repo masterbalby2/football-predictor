@@ -23,5 +23,6 @@ FROM node:22-alpine AS api
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=builder /app/deploy ./
-EXPOSE 4000
+# Don't set a fixed EXPOSE port — Railway provides PORT at runtime and
+# the Fastify server now reads it.
 CMD ["node", "dist/index.js"]
