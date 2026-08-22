@@ -17,6 +17,7 @@ FROM base AS cron
 ENV NODE_ENV=production
 ENV CRON_ONE_SHOT=true
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/cron/node_modules ./apps/cron/node_modules
 COPY --from=builder /app/apps/cron/dist ./apps/cron/dist
 COPY --from=builder /app/apps/cron/package.json ./apps/cron/package.json
 COPY --from=builder /app/packages ./packages

@@ -16,6 +16,7 @@ RUN pnpm -r run build
 FROM base AS bot
 ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/bot/node_modules ./apps/bot/node_modules
 COPY --from=builder /app/apps/bot/dist ./apps/bot/dist
 COPY --from=builder /app/apps/bot/package.json ./apps/bot/package.json
 COPY --from=builder /app/packages ./packages
