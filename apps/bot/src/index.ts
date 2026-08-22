@@ -103,8 +103,16 @@ async function main() {
   });
 
   // Use long polling (webhook not configured for MVP).
-  await bot.launch();
-  console.log("[bot] launched — polling for updates.");
+  // If the token is invalid/revoked, Telegram returns 404 on getMe during
+  // launch. Fall back to dry-run mode instead of crash-looping.
+  try {
+    await bot.launch();
+    console.log("[bot] launched — polling for updates.");
+  } catch (err) {
+    console.error("[bot] failed to launch (invalid token?):", err);
+    console.warn("[bot] Falling back to dry-run mode (no polling).");
+    setInterval(() => {}, 1000 * 60 * 60);
+  }
 }
 
 main().catch((err) => {
