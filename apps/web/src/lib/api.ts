@@ -11,7 +11,9 @@ import {
 } from "@soccer/shared-types";
 
 const BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  process.env.API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:4000";
 
 // Server-side only: API bearer token. Not exposed to the browser.
 // When set, all API requests include `Authorization: Bearer <token>`.
