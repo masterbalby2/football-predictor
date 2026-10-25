@@ -110,6 +110,10 @@ export const LEAGUES = [
   { code: "LAL", fdCode: "PD", name: "La Liga", country: "Spain" },
   { code: "BUN", fdCode: "BL1", name: "Bundesliga", country: "Germany" },
   { code: "FL1", fdCode: "FL1", name: "Ligue1", country: "France" },  
+  { code: "CL", fdCode: "CL", name: "UEFA", country: "UEFA" },
+  { code: "DED", fdCode: "DED", name: "Eridivisie", country: "Pays-Bas" },
+  { code: "PPL", fdCode: "PPL", name: "Primeira", country: "Portugal" },
+  { code: "SA", fdCode: "SA", name: "SerieA", country: "Italie" },   
 ] as const;
 
 export type LeagueCode = (typeof LEAGUES)[number]["code"];
