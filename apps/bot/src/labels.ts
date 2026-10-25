@@ -10,6 +10,14 @@ export function leagueLabel(code: string): string {
       return "Bundesliga";
     case "FL1":
       return "Ligue1";      
+    case "CL":
+      return "UEFA";
+    case "DED":
+      return "eridivisie";
+    case "PPL":
+      return "primeira";
+    case "SA":
+      return "seriea";      
     default:
       return code;
   }
