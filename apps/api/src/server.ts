@@ -139,7 +139,7 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
       querystring: {
         type: "object",
         properties: {
-          league: { type: "string", enum: ["EPL", "LAL", "BUN"] },
+          league: { type: "string", enum: ["EPL", "LAL", "BUN", "FL1"] },
           limit: { type: "integer", minimum: 1, maximum: 300 },
         },
       },
@@ -214,7 +214,7 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
       summary: "List teams (optionally filtered by league)",
       querystring: {
         type: "object",
-        properties: { league: { type: "string", enum: ["EPL", "LAL", "BUN"] } },
+        properties: { league: { type: "string", enum: ["EPL", "LAL", "BUN", "FL1"] } },
       },
     },
   }, async (req) => {
