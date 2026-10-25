@@ -20,6 +20,7 @@ async function main() {
     ["/league epl", cmdLeague(env, "epl")],
     ["/league laliga", cmdLeague(env, "laliga")],
     ["/league bundesliga", cmdLeague(env, "bundesliga")],
+    ["/league ligue1", cmdLeague(env, "ligue1")],    
     ["/league INVALID", cmdLeague(env, "INVALID")],
     ["/match Arsenal", cmdMatch(env, "Arsenal")],
     ["/match Real Madrid", cmdMatch(env, "Real Madrid")],
