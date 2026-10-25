@@ -5,7 +5,7 @@ import type { FixtureWithPrediction } from "@soccer/shared-types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FixtureCard } from "@/components/fixture-card";
 
-const LEAGUES = ["ALL", "EPL", "LAL", "BUN"] as const;
+const LEAGUES = ["ALL", "EPL", "LAL", "BUN", "FL1"] as const;
 
 export function FixturesTabs({
   fixtures,
