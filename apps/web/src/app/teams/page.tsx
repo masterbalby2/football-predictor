@@ -64,7 +64,7 @@ export default async function TeamsPage() {
       <PageHeader
         icon={Users}
         title="Teams"
-        description="All teams across EPL, La Liga, and Bundesliga"
+        description="All teams across EPL, La Liga, Bundesliga and Ligue1"
         actions={<LeagueFilter />}
       />
 
