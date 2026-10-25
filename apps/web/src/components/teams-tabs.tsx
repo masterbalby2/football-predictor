@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { leagueLabel } from "@/lib/utils";
 
-const LEAGUES = ["ALL", "EPL", "LAL", "BUN", "FL1"] as const;
+const LEAGUES = ["ALL", "EPL", "LAL", "BUN", "FL1", "CL", "DED", "PPL", "SA"] as const;
 
 export function TeamsTabs({ teams }: { teams: Team[] }) {
   const [tab, setTab] = useState<string>("ALL");
