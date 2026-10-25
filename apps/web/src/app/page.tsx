@@ -47,7 +47,7 @@ export default async function HomePage() {
         title={showingToday ? "Today's Predictions" : "Upcoming Predictions"}
         description={
           showingToday
-            ? "Dixon-Coles model · EPL · La Liga · Bundesliga"
+            ? "Dixon-Coles model · EPL · La Liga · Bundesliga · Ligue1"
             : "No matches today — showing upcoming fixtures"
         }
         actions={<LeagueFilter />}
