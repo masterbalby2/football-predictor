@@ -61,8 +61,8 @@ export async function cmdLeague(env: Env, input: string): Promise<string> {
   const code = resolveLeagueCode(input);
   if (!code) {
     return (
-      "Unknown league. Try one of: <code>epl</code>, <code>laliga</code>, <code>bundesliga</code> " +
-      "(or <code>EPL</code>, <code>LAL</code>, <code>BUN</code>)."
+      "Unknown league. Try one of: <code>epl</code>, <code>laliga</code>, <code>bundesliga</code>, <code>ligue1</code> " +
+      "(or <code>EPL</code>, <code>LAL</code>, <code>BUN</code>, <code>FL1</code>)."
     );
   }
   const items = await loadFixturesWithPredictions(env, code, 20);
