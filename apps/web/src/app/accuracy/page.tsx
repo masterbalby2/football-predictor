@@ -155,6 +155,10 @@ export default async function AccuracyPage() {
                     { key: "LAL", name: "La Liga" },
                     { key: "BUN", name: "Bundesliga" },
                     { key: "FL1", name: "Ligue1" },
+                    { key: "CL", name: "UEFA" },
+                    { key: "DED", name: "Eridivisie" },
+                    { key: "PPL", name: "Primeira" },
+                    { key: "SA", name: "SerieA" },                    
                   ]}
                   height={250}
                 />
