@@ -154,6 +154,7 @@ export default async function AccuracyPage() {
                     { key: "EPL", name: "Premier League" },
                     { key: "LAL", name: "La Liga" },
                     { key: "BUN", name: "Bundesliga" },
+                    { key: "FL1", name: "Ligue1" },
                   ]}
                   height={250}
                 />
