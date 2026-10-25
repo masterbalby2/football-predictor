@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s — Predictor",
   },
   description:
-    "Dixon-Coles match predictions for the Premier League, La Liga, and Bundesliga.",
+    "Dixon-Coles match predictions for the Premier League, La Liga, Bundesliga, Ligue1, UEFA, Eridivisie, Primeira and SerieA.",
 };
 
 export default function RootLayout({
