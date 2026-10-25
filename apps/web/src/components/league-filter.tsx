@@ -14,6 +14,10 @@ const leagues = [
   { code: "LAL", label: "La Liga" },
   { code: "BUN", label: "Bundesliga" },
   { code: "FL1", label: "Ligue1" },
+  { code: "CL", label: "UEFA" },
+  { code: "DED", label: "Eridivisie" },
+  { code: "PPL", label: "Primeira" },
+  { code: "SA", label: "SerieA" },  
 ];
 
 export function LeagueFilter({ current }: { current?: string }) {
