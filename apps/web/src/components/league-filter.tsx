@@ -13,6 +13,7 @@ const leagues = [
   { code: "EPL", label: "Premier League" },
   { code: "LAL", label: "La Liga" },
   { code: "BUN", label: "Bundesliga" },
+  { code: "FL1", label: "Ligue1" },
 ];
 
 export function LeagueFilter({ current }: { current?: string }) {
