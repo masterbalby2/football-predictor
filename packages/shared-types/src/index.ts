@@ -4,7 +4,7 @@ import { z } from "zod";
 /* Leagues + teams                                                     */
 /* ------------------------------------------------------------------ */
 
-export const LeagueCodeSchema = z.enum(["EPL", "LAL", "BUN"]);
+export const LeagueCodeSchema = z.enum(["EPL", "LAL", "BUN", "FL1"]);
 export type LeagueCode = z.infer<typeof LeagueCodeSchema>;
 
 export const LeagueSchema = z.object({
