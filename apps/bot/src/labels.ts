@@ -42,7 +42,27 @@ export function resolveLeagueCode(input: string): LeagueCode | null {
     case "ligue1":
     case "france":
     case "fl1":
-      return "FL1";      
+      return "FL1";  
+    case "fl1":
+    case "ligue1":
+    case "france":
+    case "fl1":
+      return "FL1";  
+    case "cl":
+    case "UEFA":
+    case "UEFA":
+    case "cl":
+      return "CL";  
+    case "ded":
+    case "eridivisie":
+    case "pays-bas":
+    case "ded":
+      return "DED";  
+    case "ppl":
+    case "primeira":
+    case "portugal":
+    case "ppl":
+      return "PPL";        
     default:
       return null;
   }
