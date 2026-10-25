@@ -28,6 +28,8 @@ export function leagueLabel(code: string): string {
       return "La Liga";
     case "BUN":
       return "Bundesliga";
+    case "FL1":
+      return "Ligue1";      
     default:
       return code;
   }
@@ -41,6 +43,8 @@ export function leagueShort(code: string): string {
       return "LAL";
     case "BUN":
       return "BUN";
+    case "FL1":
+      return "FL1";      
     default:
       return code;
   }
