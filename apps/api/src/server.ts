@@ -84,7 +84,7 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
       info: {
         title: "Soccer Match Predictor API",
         description:
-          "Dixon-Coles match predictions for EPL, La Liga, and Bundesliga.\n\n" +
+          "Dixon-Coles match predictions for EPL, La Liga, Bundesliga, UEFA Champions League, Eredivisie, Ligue1, Primeira Liga and Serie A.\n\n" +
           "## Authentication\n" +
           "If `API_AUTH_TOKEN` is set on the server, all endpoints (except `/health` and `/docs`) " +
           "require a Bearer token in the `Authorization` header:\n\n" +
@@ -139,7 +139,7 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
       querystring: {
         type: "object",
         properties: {
-          league: { type: "string", enum: ["EPL", "LAL", "BUN", "FL1"] },
+          league: { type: "string", enum: ["EPL", "LAL", "BUN", "FL1" , "CL", "DED", "PPL", "SA"] },
           limit: { type: "integer", minimum: 1, maximum: 300 },
         },
       },
@@ -214,7 +214,7 @@ export async function buildServer(env: Env = loadEnv()): Promise<FastifyInstance
       summary: "List teams (optionally filtered by league)",
       querystring: {
         type: "object",
-        properties: { league: { type: "string", enum: ["EPL", "LAL", "BUN", "FL1"] } },
+        properties: { league: { type: "string", enum: ["EPL", "LAL", "BUN", "FL1", "CL", "DED", "PPL", "SA"] } },
       },
     },
   }, async (req) => {
