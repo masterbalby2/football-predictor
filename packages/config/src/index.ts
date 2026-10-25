@@ -109,6 +109,7 @@ export const LEAGUES = [
   { code: "EPL", fdCode: "PL", name: "Premier League", country: "England" },
   { code: "LAL", fdCode: "PD", name: "La Liga", country: "Spain" },
   { code: "BUN", fdCode: "BL1", name: "Bundesliga", country: "Germany" },
+  { code: "FL1", fdCode: "FL1", name: "Ligue1", country: "France" },  
 ] as const;
 
 export type LeagueCode = (typeof LEAGUES)[number]["code"];
